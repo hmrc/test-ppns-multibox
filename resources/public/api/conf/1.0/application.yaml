@@ -1,0 +1,51 @@
+
+openapi: "3.0.3"
+
+info:
+  version: 1.0.0
+  title: Test PPNS Multibox
+
+servers:
+- url: https://test-api.service.hmrc.gov.uk/test/ppns-multibox
+  description: Sandbox
+- url: https://api.service.hmrc.gov.uk/test/ppns-multibox
+  description: Production
+
+components:
+  parameters:
+    acceptHeader:
+      name: Accept
+      in: header
+      schema:
+        type: string
+        enum: [
+          "application/vnd.hmrc.1.0+json",
+          "application/vnd.hmrc.1.0+xml"
+        ]
+      required: true
+
+paths:
+  /current-time:
+    get:
+      summary: Return the current time
+      description: |
+        An endpoint that returns the current server time.
+      tags:
+      - test-ppns-multibox
+      parameters:
+      - $ref: '#/components/parameters/acceptHeader'
+      responses:
+        200:
+          description: "OK Response"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: the current server time
+              example: 
+                {
+                  "message" : "2023-02-27T16:54:23.000Z"
+                }

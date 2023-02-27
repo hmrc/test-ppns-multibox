@@ -14,14 +14,24 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.config
+package uk.gov.hmrc.testppnsmultibox.controllers
 
-import com.google.inject.AbstractModule
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class Module extends AbstractModule {
+import play.api.http.Status
+import play.api.test.Helpers._
+import play.api.test.{FakeRequest, Helpers}
 
-  override def configure(): Unit = {
+class TimeControllerSpec extends AnyWordSpec with Matchers {
 
-    bind(classOf[AppConfig]).asEagerSingleton()
+  private val fakeRequest = FakeRequest("GET", "/")
+  private val controller  = new TimeController(Helpers.stubControllerComponents())
+
+  "GET /" should {
+    "return 200" in {
+      val result = controller.currentTime()(fakeRequest)
+      status(result) shouldBe Status.OK
+    }
   }
 }
