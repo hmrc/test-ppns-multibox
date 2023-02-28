@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.testppnsmultibox.controllers
 
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import java.time.Instant
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
@@ -29,6 +28,6 @@ class TimeController @Inject() (cc: ControllerComponents)
     extends BackendController(cc) {
 
   def currentTime(): Action[AnyContent] = Action.async { implicit request =>
-    Future.successful(Ok(ZonedDateTime.now().format(DateTimeFormatter.ISO_ZONED_DATE_TIME)))
+    Future.successful(Ok(Instant.now().toString))
   }
 }

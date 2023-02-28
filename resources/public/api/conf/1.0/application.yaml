@@ -47,5 +47,5 @@ paths:
                     description: the current server time
               example: 
                 {
-                  "message" : "2023-02-27T16:54:23.000Z"
+                  "message" : "2023-02-27T16:54:23.933430Z"
                 }
