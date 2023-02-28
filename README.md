@@ -1,7 +1,7 @@
 
 # Test API for Push Pull Notification Service Multibox
 
-An API for testing Push Pull Notification Service Multibox
+An API for testing migration to Push Pull Notification Service Multibox
 
 ### License
 
