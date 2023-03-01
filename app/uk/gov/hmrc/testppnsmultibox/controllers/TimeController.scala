@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.config
+package uk.gov.hmrc.testppnsmultibox.controllers
 
-import com.google.inject.AbstractModule
+import java.time.Instant
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.Future
 
-class Module extends AbstractModule {
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-  override def configure(): Unit = {
+@Singleton()
+class TimeController @Inject() (cc: ControllerComponents)
+    extends BackendController(cc) {
 
-    bind(classOf[AppConfig]).asEagerSingleton()
+  def currentTime(): Action[AnyContent] = Action.async { implicit request =>
+    Future.successful(Ok(Instant.now().toString))
   }
 }
