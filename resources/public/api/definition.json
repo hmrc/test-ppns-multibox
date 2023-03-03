@@ -7,8 +7,7 @@
     "versions": [
       {
         "version": "1.0",
-        "status": "STABLE",
-        "endpointsEnabled": false
+        "status": "STABLE"
       }
     ]
   }
