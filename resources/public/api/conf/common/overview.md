@@ -1,1 +1,1 @@
-This API is for the HMRC API Platform developers to test migration to PPNS multibox.
+This API is for the HMRC API Platform developers to test migration to PPNS multibox (Common).
