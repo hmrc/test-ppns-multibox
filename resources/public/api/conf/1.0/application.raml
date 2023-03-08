@@ -1,0 +1,38 @@
+#%RAML 1.0
+---
+title: Test PPNS Multibox
+version: 1.0
+
+protocols: [ HTTPS ]
+baseUri: https://api.service.hmrc.gov.uk
+
+documentation:
+ - title: Overview
+   content: !include docs/overview.md
+ - title: Versioning
+   content: !include https://developer.service.hmrc.gov.uk/api-documentation/assets/common/docs/versioning.md
+ - title: Errors
+   content: !include https://developer.service.hmrc.gov.uk/api-documentation/assets/common/docs/errors.md
+
+mediaType: application/hal+json
+
+uses:
+  headers: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/headers.raml
+  annotations: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/annotations.raml
+  types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
+
+/test/ppns-multibox:
+  /current-time:
+    get:
+      displayName: Return the current time
+      description: |
+        An endpoint that returns the current server time.
+      is: [headers.acceptHeader]
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                {
+                  "message": "2023-02-27T16:54:23.933430Z"
+                }
