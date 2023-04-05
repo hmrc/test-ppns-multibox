@@ -20,14 +20,39 @@ import java.time.Instant
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import uk.gov.hmrc.testppnsmultibox.ppns.ActionBuilders
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
+import uk.gov.hmrc.testppnsmultibox.services.TimeService
+
+case class TimeResponse(message: Instant)
+
+object TimeResponse {
+  implicit val format = Json.format[TimeResponse]
+}
+
+case class NotificationResponse(boxId: BoxId, correlationId: CorrelationId)
+
+object NotificationResponse {
+  implicit val format = Json.format[NotificationResponse]
+}
+
 @Singleton()
-class TimeController @Inject() (cc: ControllerComponents)
+class TimeController @Inject() (timeService: TimeService, actionBuilders: ActionBuilders)(cc: ControllerComponents)
     extends BackendController(cc) {
 
-  def currentTime(): Action[AnyContent] = Action.async { implicit request =>
-    Future.successful(Ok(Instant.now().toString))
+  import actionBuilders._
+
+  def currentTime(): Action[AnyContent] = Action.async { _ =>
+    Future.successful(Ok(Json.toJson(TimeResponse(Instant.now()))))
+  }
+
+  def notifyMeIn(minutes: Int): Action[AnyContent] = actionWithBoxId.async { implicit requestWithBoxId =>
+    val boxId         = requestWithBoxId.boxId
+    val correlationId = timeService.notifyMeIn(minutes, boxId)
+    Future.successful(Accepted(Json.toJson(NotificationResponse(boxId, correlationId))))
   }
 }

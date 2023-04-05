@@ -14,17 +14,8 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.config
+package uk.gov.hmrc.testppnsmultibox.ppns
 
-import javax.inject.{Inject, Singleton}
+case class MissingClientIdException(message: String) extends Exception(message)
 
-import play.api.Configuration
-
-@Singleton
-class AppConfig @Inject() (config: Configuration) {
-
-  val appName: String = config.get[String]("appName")
-
-  val apiContext = "test/ppns-multibox"
-  val apiVersion = "1.0"
-}
+case class MissingBoxException(message: String) extends Exception(message)

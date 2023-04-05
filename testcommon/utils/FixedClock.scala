@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.config
+package utils
 
-import javax.inject.{Inject, Singleton}
+import java.time.temporal.ChronoUnit.MILLIS
+import java.time.{Clock, Instant, LocalDateTime, ZoneOffset}
 
-import play.api.Configuration
+trait FixedClock {
 
-@Singleton
-class AppConfig @Inject() (config: Configuration) {
+  val utc = ZoneOffset.UTC
 
-  val appName: String = config.get[String]("appName")
+  val instant: Instant = LocalDateTime.of(2022, 4, 1, 2, 3, 4, 5_1000_1000).truncatedTo(MILLIS).toInstant(utc)
 
-  val apiContext = "test/ppns-multibox"
-  val apiVersion = "1.0"
+  val clock: Clock = Clock.fixed(instant, utc)
+
 }

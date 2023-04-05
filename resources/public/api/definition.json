@@ -8,7 +8,27 @@
       {
         "version": "1.0",
         "status": "STABLE",
-        "endpointsEnabled": true
+        "endpointsEnabled": true,
+        "fieldDefinitions": [
+          {
+            "name": "callbackUrl",
+            "description": "What is your callback URL?",
+            "type": "PPNSField",
+            "validation": {
+              "errorMessage": "Callback URL must be a valid https URL",
+              "rules": [
+                {
+                  "UrlValidationRule": {}
+                },
+                {
+                  "RegexValidationRule": {
+                    "regex": "^https.*"
+                  }
+                }
+              ]
+            }
+          }
+        ]
       }
     ]
   }

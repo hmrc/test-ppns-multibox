@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.config
+package uk.gov.hmrc.testppnsmultibox.mocks
 
-import javax.inject.{Inject, Singleton}
+import org.mockito.MockitoSugar
 
-import play.api.Configuration
+import uk.gov.hmrc.testppnsmultibox.ppns.models.CorrelationId
+import uk.gov.hmrc.testppnsmultibox.services.UuidService
 
-@Singleton
-class AppConfig @Inject() (config: Configuration) {
+trait UuidServiceMockModule extends MockitoSugar {
 
-  val appName: String = config.get[String]("appName")
+  val mockUuidService = mock[UuidService]
 
-  val apiContext = "test/ppns-multibox"
-  val apiVersion = "1.0"
+  val fakeCorrelationId = CorrelationId.random
+
+  object CorrelationIdGenerator {
+
+    def returnsFakeCorrelationId = when(mockUuidService.correlationId).thenReturn(fakeCorrelationId)
+  }
 }

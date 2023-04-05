@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.config
+package uk.gov.hmrc.testppnsmultibox.ppns.models
 
-import javax.inject.{Inject, Singleton}
+import play.api.libs.json.{Format, Json}
 
-import play.api.Configuration
+case class BoxId(value: String) extends AnyVal
 
-@Singleton
-class AppConfig @Inject() (config: Configuration) {
-
-  val appName: String = config.get[String]("appName")
-
-  val apiContext = "test/ppns-multibox"
-  val apiVersion = "1.0"
+object BoxId {
+  implicit val format: Format[BoxId] = Json.valueFormat[BoxId]
 }
