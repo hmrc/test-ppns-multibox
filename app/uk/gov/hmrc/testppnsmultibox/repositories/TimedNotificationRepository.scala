@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.respositories
+package uk.gov.hmrc.testppnsmultibox.repositories
 
+import java.util.concurrent.TimeUnit.SECONDS
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -36,6 +37,14 @@ class TimedNotificationRepository @Inject() (mongo: MongoComponent)(implicit val
       mongoComponent = mongo,
       domainFormat = TimedNotification.format,
       indexes = Seq(
+        IndexModel(
+          ascending("expiresAt"),
+          IndexOptions()
+            .name("expiresAtTTLIndex")
+            .background(true)
+            .unique(false)
+            .expireAfter(0, SECONDS)
+        ),
         IndexModel(
           ascending("correlationId"),
           IndexOptions()

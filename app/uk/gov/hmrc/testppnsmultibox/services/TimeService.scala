@@ -22,7 +22,7 @@ import javax.inject.{Inject, Singleton}
 
 import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
-import uk.gov.hmrc.testppnsmultibox.respositories.TimedNotificationRepository
+import uk.gov.hmrc.testppnsmultibox.repositories.TimedNotificationRepository
 
 @Singleton()
 class TimeService @Inject() (uuidService: UuidService, timedNotificationRepository: TimedNotificationRepository, clock: Clock) {

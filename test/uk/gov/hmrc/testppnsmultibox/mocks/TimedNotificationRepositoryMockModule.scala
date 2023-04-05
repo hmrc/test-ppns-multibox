@@ -21,7 +21,7 @@ import scala.concurrent.Future.successful
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 
 import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
-import uk.gov.hmrc.testppnsmultibox.respositories.TimedNotificationRepository
+import uk.gov.hmrc.testppnsmultibox.repositories.TimedNotificationRepository
 
 trait TimedNotificationRepositoryMockModule extends MockitoSugar with ArgumentMatchersSugar {
 

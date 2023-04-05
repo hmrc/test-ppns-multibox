@@ -17,13 +17,16 @@
 package uk.gov.hmrc.testppnsmultibox.domain.models
 
 import java.time.Instant
+import java.time.temporal.ChronoUnit.HOURS
 
 import play.api.libs.json.Json
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
 
-case class TimedNotification(boxId: BoxId, correlationId: CorrelationId, notifyAt: Instant, completed: Boolean = false)
+case class TimedNotification(boxId: BoxId, correlationId: CorrelationId, notifyAt: Instant, completed: Boolean = false) {
+  val expiresAt = notifyAt.plus(1, HOURS)
+}
 
 object TimedNotification {
 

@@ -35,17 +35,15 @@ class BoxIdTransformer @Inject() (appConfig: AppConfig, pushPullNotificationConn
     extends ActionTransformer[Request, RequestWithBoxId]
     with BackendHeaderCarrierProvider {
 
-  private val XClientId = "X-Client-ID"
-
   override protected def transform[A](request: Request[A]): Future[RequestWithBoxId[A]] =
     (for {
-      clientId <- OptionT.fromOption[Future](request.headers.get(XClientId))
+      clientId <- OptionT.fromOption[Future](request.headers.get(CustomHeaders.XClientId))
       boxId    <- OptionT.liftF(pushPullNotificationConnector.getBoxId(s"${appConfig.apiContext}##${appConfig.apiVersion}##callbackUrl", clientId)(hc(request)))
     } yield boxId.getOrElse(
       throw MissingBoxException(s"A box was not found for clientId $clientId")
     ))
       .fold(
-        throw MissingClientIdException(s"$XClientId was not provided as a header")
+        throw MissingClientIdException(s"${CustomHeaders.XClientId} was not provided as a header")
       )(
         RequestWithBoxId(request, _)
       )
