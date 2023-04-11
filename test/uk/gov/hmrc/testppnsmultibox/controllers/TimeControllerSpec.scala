@@ -16,22 +16,46 @@
 
 package uk.gov.hmrc.testppnsmultibox.controllers
 
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
+import utils.HmrcSpec
 
 import play.api.http.Status
+import play.api.libs.json.Json
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
 
-class TimeControllerSpec extends AnyWordSpec with Matchers {
+import uk.gov.hmrc.testppnsmultibox.mocks.{ActionBuildersMockModule, TimeServiceMockModule}
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
 
-  private val fakeRequest = FakeRequest("GET", "/")
-  private val controller  = new TimeController(Helpers.stubControllerComponents())
+class TimeControllerSpec extends HmrcSpec with ActionBuildersMockModule with TimeServiceMockModule {
 
-  "GET /" should {
-    "return 200" in {
-      val result = controller.currentTime()(fakeRequest)
+  trait Setup {
+    val fakeRequest = FakeRequest()
+
+    val underTest = new TimeController(mockTimeService, mockActionBuilders)(Helpers.stubControllerComponents())
+  }
+
+  "currentTime" should {
+    "return 200 and a TimeResponse body with a time zone of Z" in new Setup {
+      val result = underTest.currentTime()(fakeRequest)
+
       status(result) shouldBe Status.OK
+      val body = contentAsJson(result).as[TimeResponse]
+      body.message.toString should endWith("Z")
+    }
+  }
+
+  "notifyMeIn" should {
+    "return 202 and a NotificationResponse body" in new Setup {
+      val minutes           = 1
+      val fakeBoxId         = BoxId("box-id")
+      val fakeCorrelationId = CorrelationId.random
+      ActionWithBoxId.fetchesBoxId(fakeBoxId)
+      NotifyMeIn.returnsCorrelationId(fakeCorrelationId)
+
+      val result = underTest.notifyMeIn(minutes)(fakeRequest)
+
+      status(result) shouldBe Status.ACCEPTED
+      contentAsJson(result) shouldBe Json.toJson(NotificationResponse(fakeBoxId, fakeCorrelationId))
     }
   }
 }

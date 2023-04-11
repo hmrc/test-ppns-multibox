@@ -14,17 +14,8 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.config
+package uk.gov.hmrc.testppnsmultibox.ppns
 
-import javax.inject.{Inject, Singleton}
-
-import play.api.Configuration
-
-@Singleton
-class AppConfig @Inject() (config: Configuration) {
-
-  val appName: String = config.get[String]("appName")
-
-  val apiContext = "test/ppns-multibox"
-  val apiVersion = "1.0"
+object CustomHeaders {
+  val XClientId = "X-Client-ID"
 }

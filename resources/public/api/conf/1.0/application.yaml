@@ -40,6 +40,20 @@ components:
           type: string
       example:
         message: 2023-02-27T16:54:23.933430Z
+    NotificationResponse:
+      title: Notification Response
+      required:
+        - boxId
+        - correlationId
+      type: object
+      properties:
+        boxId:
+          type: string
+        correlationId:
+          type: string
+      example:
+        boxId: f9e722a8-200c-4572-8680-aa3f103ea1a5
+        correlationId: 2bb5b059-73db-4445-a7ae-4e4c471866dd
 
 paths:
   /current-time:
@@ -61,3 +75,29 @@ paths:
                 - $ref: '#/components/schemas/TimeResponse'
       security:
       - {}
+
+  /notify-me-in:
+    get:
+      tags:
+        - test-ppns-multibox
+      summary: Take minutes to return the current time
+      description: >
+        An endpoint that takes the requested number of minutes to return the current server time.
+      parameters:
+        - $ref: '#/components/parameters/acceptHeader'
+        - in: path
+          name: minutes
+          schema:
+            type: integer
+          required: true
+          description: Number of minutes to notification
+      responses:
+        '202':
+          description: 'ACCEPTED Response'
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotificationResponse'
+      security:
+        - {}

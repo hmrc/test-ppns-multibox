@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.config
+package uk.gov.hmrc.testppnsmultibox.mocks
 
-import javax.inject.{Inject, Singleton}
+import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 
-import play.api.Configuration
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
+import uk.gov.hmrc.testppnsmultibox.services.TimeService
 
-@Singleton
-class AppConfig @Inject() (config: Configuration) {
+trait TimeServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
 
-  val appName: String = config.get[String]("appName")
+  val mockTimeService = mock[TimeService]
 
-  val apiContext = "test/ppns-multibox"
-  val apiVersion = "1.0"
+  object NotifyMeIn {
+
+    def returnsCorrelationId(correlationId: CorrelationId) = {
+      when(mockTimeService.notifyMeIn(*[Int], *[BoxId])).thenReturn(correlationId)
+    }
+  }
 }

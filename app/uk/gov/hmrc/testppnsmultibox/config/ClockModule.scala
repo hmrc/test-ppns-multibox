@@ -16,15 +16,13 @@
 
 package uk.gov.hmrc.testppnsmultibox.config
 
-import javax.inject.{Inject, Singleton}
+import java.time.Clock
 
-import play.api.Configuration
+import com.google.inject.AbstractModule
 
-@Singleton
-class AppConfig @Inject() (config: Configuration) {
+class ClockModule extends AbstractModule {
 
-  val appName: String = config.get[String]("appName")
-
-  val apiContext = "test/ppns-multibox"
-  val apiVersion = "1.0"
+  override def configure(): Unit = {
+    bind(classOf[Clock]).toInstance(Clock.systemUTC())
+  }
 }

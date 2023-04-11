@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.config
+package uk.gov.hmrc.testppnsmultibox.services
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Singleton
 
-import play.api.Configuration
+import uk.gov.hmrc.testppnsmultibox.ppns.models.CorrelationId
 
 @Singleton
-class AppConfig @Inject() (config: Configuration) {
-
-  val appName: String = config.get[String]("appName")
-
-  val apiContext = "test/ppns-multibox"
-  val apiVersion = "1.0"
+class UuidService {
+  def correlationId = CorrelationId.random
 }

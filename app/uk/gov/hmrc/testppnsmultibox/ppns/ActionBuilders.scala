@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.config
+package uk.gov.hmrc.testppnsmultibox.ppns
 
 import javax.inject.{Inject, Singleton}
 
-import play.api.Configuration
+import play.api.mvc.{ActionBuilder, AnyContent, DefaultActionBuilder}
 
 @Singleton
-class AppConfig @Inject() (config: Configuration) {
+class ActionBuilders @Inject() (defaultActionBuilder: DefaultActionBuilder, boxIdTransformer: BoxIdTransformer) {
 
-  val appName: String = config.get[String]("appName")
-
-  val apiContext = "test/ppns-multibox"
-  val apiVersion = "1.0"
+  def actionWithBoxId: ActionBuilder[RequestWithBoxId, AnyContent] =
+    defaultActionBuilder
+      .andThen(boxIdTransformer)
 }
