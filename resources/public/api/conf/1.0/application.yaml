@@ -76,7 +76,7 @@ paths:
       security:
       - {}
 
-  /notify-me-in:
+  /notify-me-in/{minutes}:
     get:
       tags:
         - test-ppns-multibox
