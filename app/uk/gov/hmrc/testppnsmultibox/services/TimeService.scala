@@ -19,7 +19,7 @@ package uk.gov.hmrc.testppnsmultibox.services
 import java.time.Clock
 import java.time.temporal.ChronoUnit.MINUTES
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future, blocking}
+import scala.concurrent.ExecutionContext
 
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -42,16 +42,11 @@ class TimeService @Inject() (
     val correlationId = uuidService.correlationId
     val notifyAt      = clock.instant().plus(minutes, MINUTES)
     timedNotificationRepository.insert(TimedNotification(boxId, correlationId, notifyAt))
-    Future {
-      blocking {
-        sleepService.sleepFor(minutes * 60_000)
-      }
-    }.map { _ =>
-      pushPullNotificationConnector.postNotifications(boxId, correlationId, s"Notify at $notifyAt")
-        .map { notificationId =>
-          timedNotificationRepository.complete(boxId, correlationId, notificationId)
-        }
-    }
+    for {
+      _              <- sleepService.sleepFor(minutes)
+      notificationId <- pushPullNotificationConnector.postNotifications(boxId, correlationId, s"Notify at $notifyAt")
+      _              <- timedNotificationRepository.complete(boxId, correlationId, notificationId)
+    } yield ()
     correlationId
   }
 

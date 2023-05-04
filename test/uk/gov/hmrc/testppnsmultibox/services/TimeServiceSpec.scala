@@ -36,7 +36,7 @@ class TimeServiceSpec extends HmrcSpec with FixedClock with UuidServiceMockModul
   }
 
   "notifyMeIn" should {
-    "return a correlation ID" in new Setup {
+    "return a correlation ID and perform an asynchronous action" in new Setup {
       CorrelationIdGenerator.returnsFakeCorrelationId
 
       val boxId             = BoxId.random
@@ -44,7 +44,9 @@ class TimeServiceSpec extends HmrcSpec with FixedClock with UuidServiceMockModul
       val notifyAt          = instant.plus(minutes, MINUTES)
       val timedNotification = TimedNotification(boxId, fakeCorrelationId, notifyAt)
       Insert.returns(timedNotification)
-
+      
+      SleepFor.returnsImmediately()
+      
       val notificationId = NotificationId.random
       PostNotifications.returnsNotificationId(notificationId)
 
@@ -55,7 +57,7 @@ class TimeServiceSpec extends HmrcSpec with FixedClock with UuidServiceMockModul
 
       // Verify that blocking Future performs its operation
       Thread.sleep(500)
-      SleepFor.verifyCalledWith(minutes * 60_000)
+      SleepFor.verifyCalledWith(minutes)
       PostNotifications.verifyCalledWith(boxId, fakeCorrelationId, s"Notify at $notifyAt")
       Complete.verifyCalledWith(boxId, fakeCorrelationId, notificationId)
     }

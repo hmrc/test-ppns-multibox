@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.testppnsmultibox.services
 
-import javax.inject.Singleton
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.{ExecutionContext, Future, blocking}
 
 @Singleton
-class SleepService {
-  def sleepFor(millis: Long): Unit = Thread.sleep(millis)
+class SleepService @Inject() ()(implicit ec: ExecutionContext) {
+
+  def sleepFor(minutes: Int): Future[Unit] = Future { blocking { Thread.sleep(minutes * 60_000) } }
 }

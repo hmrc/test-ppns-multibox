@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.testppnsmultibox.mocks
 
+import scala.concurrent.Future
+
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 
 import uk.gov.hmrc.testppnsmultibox.services.SleepService
@@ -26,8 +28,12 @@ trait SleepServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
 
   object SleepFor {
 
-    def verifyCalledWith(millis: Long) = {
-      verify(mockSleepService).sleepFor(eqTo(millis))
+    def returnsImmediately() = {
+      when(mockSleepService.sleepFor(*)).thenReturn(Future.successful(()))
+    }
+    
+    def verifyCalledWith(minutes: Int) = {
+      verify(mockSleepService).sleepFor(eqTo(minutes))
     }
   }
 }
