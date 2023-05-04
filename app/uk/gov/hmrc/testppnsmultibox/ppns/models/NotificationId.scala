@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.mocks
+package uk.gov.hmrc.testppnsmultibox.ppns.models
 
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
+import java.util.UUID
 
-import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
-import uk.gov.hmrc.testppnsmultibox.services.TimeService
+import play.api.libs.json.{Format, Json}
 
-trait TimeServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
+case class NotificationId(value: UUID) extends AnyVal
 
-  val mockTimeService = mock[TimeService]
+object NotificationId {
+  implicit val format: Format[NotificationId] = Json.valueFormat[NotificationId]
 
-  object NotifyMeIn {
-
-    def returnsCorrelationId(correlationId: CorrelationId) = {
-      when(mockTimeService.notifyMeIn(*[Int], *[BoxId])(*)).thenReturn(correlationId)
-    }
-  }
+  def random = NotificationId(UUID.randomUUID())
 }

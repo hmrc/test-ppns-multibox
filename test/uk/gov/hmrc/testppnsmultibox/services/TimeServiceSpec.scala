@@ -17,31 +17,47 @@
 package uk.gov.hmrc.testppnsmultibox.services
 
 import java.time.temporal.ChronoUnit.MINUTES
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import utils.{FixedClock, HmrcSpec}
 
-import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
-import uk.gov.hmrc.testppnsmultibox.mocks.{TimedNotificationRepositoryMockModule, UuidServiceMockModule}
-import uk.gov.hmrc.testppnsmultibox.ppns.models.BoxId
+import uk.gov.hmrc.http.HeaderCarrier
 
-class TimeServiceSpec extends HmrcSpec with FixedClock with UuidServiceMockModule with TimedNotificationRepositoryMockModule {
+import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
+import uk.gov.hmrc.testppnsmultibox.mocks.{PushPullNotificationConnectorMockModule, SleepServiceMockModule, TimedNotificationRepositoryMockModule, UuidServiceMockModule}
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, NotificationId}
+
+class TimeServiceSpec extends HmrcSpec with FixedClock with UuidServiceMockModule with TimedNotificationRepositoryMockModule with PushPullNotificationConnectorMockModule
+    with SleepServiceMockModule {
 
   trait Setup {
-    val underTest = new TimeService(mockUuidService, mockTimedNotificationRepository, clock)
+    implicit val hc = HeaderCarrier()
+    val underTest   = new TimeService(mockUuidService, mockTimedNotificationRepository, mockPushPullNotificationConnector, mockSleepService, clock)
   }
 
   "notifyMeIn" should {
     "return a correlation ID" in new Setup {
-      val boxId             = BoxId("box-id")
-      val minutes           = 1
-      val timedNotification = TimedNotification(boxId, fakeCorrelationId, instant.plus(minutes, MINUTES))
       CorrelationIdGenerator.returnsFakeCorrelationId
+
+      val boxId             = BoxId.random
+      val minutes           = 1
+      val notifyAt          = instant.plus(minutes, MINUTES)
+      val timedNotification = TimedNotification(boxId, fakeCorrelationId, notifyAt)
+      Insert.returns(timedNotification)
+
+      val notificationId = NotificationId.random
+      PostNotifications.returnsNotificationId(notificationId)
 
       val result = underTest.notifyMeIn(minutes, boxId)
 
       Insert.verifyCalledWith(timedNotification)
-      // TODO: Verify that future is created
       result shouldBe fakeCorrelationId
+
+      // Verify that blocking Future performs its operation
+      Thread.sleep(500)
+      SleepFor.verifyCalledWith(minutes * 60_000)
+      PostNotifications.verifyCalledWith(boxId, fakeCorrelationId, s"Notify at $notifyAt")
+      Complete.verifyCalledWith(boxId, fakeCorrelationId, notificationId)
     }
   }
 }

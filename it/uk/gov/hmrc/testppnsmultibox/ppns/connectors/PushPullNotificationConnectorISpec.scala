@@ -17,15 +17,19 @@
 package uk.gov.hmrc.testppnsmultibox.ppns.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import utils.AsyncHmrcSpec
+
 import play.api.Configuration
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.Json
 import play.mvc.Http.Status.OK
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
-import uk.gov.hmrc.testppnsmultibox.ppns.models.BoxId
-import utils.AsyncHmrcSpec
+
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId, NotificationId}
 
 class PushPullNotificationConnectorISpec extends AsyncHmrcSpec with WireMockSupport with GuiceOneAppPerSuite {
 
@@ -45,11 +49,13 @@ class PushPullNotificationConnectorISpec extends AsyncHmrcSpec with WireMockSupp
 
     val underTest = app.injector.instanceOf[PushPullNotificationConnector]
 
-    val boxName  = "box-name"
-    val clientId = "client-id"
-    val boxId    = "box-id"
+    val boxName        = "box-name"
+    val clientId       = "client-id"
+    val boxId          = BoxId.random
+    val correlationId  = CorrelationId.random
+    val notificationId = NotificationId.random
 
-    def stubReturns(body: String): Any =
+    def getBoxStubReturns(response: String): Any =
       stubFor(
         get(urlPathEqualTo("/box"))
           .withQueryParam("boxName", equalTo(boxName))
@@ -57,7 +63,17 @@ class PushPullNotificationConnectorISpec extends AsyncHmrcSpec with WireMockSupp
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(body)
+              .withBody(response)
+          )
+      )
+
+    def postNotificationsStubForBoxIdReturns(boxId: String)(notificationId: String): Any =
+      stubFor(
+        post(urlPathEqualTo(s"/box/$boxId/notifications"))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.obj("notificationId" -> notificationId).toString)
           )
       )
 
@@ -66,9 +82,9 @@ class PushPullNotificationConnectorISpec extends AsyncHmrcSpec with WireMockSupp
   "getBoxId" should {
 
     "return a box ID if successful" in new Setup {
-      stubReturns(
+      getBoxStubReturns(
         s"""{
-           |    "boxId": "$boxId",
+           |    "boxId": "${boxId.value}",
            |    "boxName": "$boxName",
            |    "boxCreator": {
            |        "clientId": "$clientId"
@@ -80,11 +96,11 @@ class PushPullNotificationConnectorISpec extends AsyncHmrcSpec with WireMockSupp
 
       val result = await(underTest.getBoxId(boxName, clientId))
 
-      result mustBe Some(BoxId(boxId))
+      result mustBe Some(boxId)
     }
 
     "return None if unsuccessful" in new Setup {
-      stubReturns(
+      getBoxStubReturns(
         """{
           |    "code": "BOX_NOT_FOUND",
           |    "message": "Box not found"
@@ -94,6 +110,17 @@ class PushPullNotificationConnectorISpec extends AsyncHmrcSpec with WireMockSupp
       val result = await(underTest.getBoxId(boxName, clientId))
 
       result mustBe None
+    }
+  }
+
+  "postNotifications" should {
+
+    "return a notification ID if successful" in new Setup {
+      postNotificationsStubForBoxIdReturns(boxId.value.toString)(notificationId.value.toString)
+
+      val result = await(underTest.postNotifications(boxId, correlationId, "message"))
+
+      result mustBe notificationId
     }
   }
 }

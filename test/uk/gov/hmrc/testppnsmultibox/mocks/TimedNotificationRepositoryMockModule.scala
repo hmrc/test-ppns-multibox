@@ -21,6 +21,7 @@ import scala.concurrent.Future.successful
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 
 import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId, NotificationId}
 import uk.gov.hmrc.testppnsmultibox.repositories.TimedNotificationRepository
 
 trait TimedNotificationRepositoryMockModule extends MockitoSugar with ArgumentMatchersSugar {
@@ -30,11 +31,19 @@ trait TimedNotificationRepositoryMockModule extends MockitoSugar with ArgumentMa
   object Insert {
 
     def returns(timedNotification: TimedNotification) = {
-      when(mockTimedNotificationRepository.insert(*)).thenReturn(successful(timedNotification))
+      when(mockTimedNotificationRepository.insert(*[TimedNotification])).thenReturn(successful(timedNotification))
     }
 
     def verifyCalledWith(timedNotification: TimedNotification) = {
       verify(mockTimedNotificationRepository).insert(eqTo(timedNotification))
     }
   }
+
+  object Complete {
+
+    def verifyCalledWith(boxId: BoxId, correlationId: CorrelationId, notificationId: NotificationId) = {
+      verify(mockTimedNotificationRepository).complete(eqTo(boxId), eqTo(correlationId), eqTo(notificationId))
+    }
+  }
+
 }

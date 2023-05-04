@@ -46,11 +46,11 @@ class BoxIdTransformerSpec extends HmrcSpec with PushPullNotificationConnectorMo
     val underTest = new BoxIdTransformer(mockAppConfig, mockPushPullNotificationConnector)
 
     val clientId    = "client-id"
-    val fakeBoxId   = BoxId("box-id")
+    val fakeBoxId   = BoxId.random
     val fakeRequest = FakeRequest()
   }
 
-  val requestToResultBlock = (r: RequestWithBoxId[AnyContent]) => Future.successful(Ok(r.boxId.value))
+  val requestToResultBlock = (r: RequestWithBoxId[AnyContent]) => Future.successful(Ok(r.boxId.value.toString))
 
   "transform" should {
     "return the box id when the client ID exists and the box was created" in new Setup {
@@ -59,8 +59,8 @@ class BoxIdTransformerSpec extends HmrcSpec with PushPullNotificationConnectorMo
       val result = underTest.invokeBlock(fakeRequest.withHeaders("X-Client-ID" -> clientId), requestToResultBlock)
 
       status(result) shouldBe OK
-      contentAsString(result) shouldBe fakeBoxId.value
-      GetBoxId.verifyCalledWith(s"$apiContext##$apiVersion##callbackUrl", clientId)
+      contentAsString(result) shouldBe fakeBoxId.value.toString
+      GetBoxId.verifyCalledAtLeastOnceWith(s"$apiContext##$apiVersion##callbackUrl", clientId)
     }
 
     "return an error message when the client ID is missing" in new Setup {
@@ -76,7 +76,7 @@ class BoxIdTransformerSpec extends HmrcSpec with PushPullNotificationConnectorMo
         await(underTest.invokeBlock(fakeRequest.withHeaders("X-Client-ID" -> clientId), requestToResultBlock))
       }
 
-      GetBoxId.verifyCalledWith(s"$apiContext##$apiVersion##callbackUrl", clientId)
+      GetBoxId.verifyCalledAtLeastOnceWith(s"$apiContext##$apiVersion##callbackUrl", clientId)
     }
   }
 }

@@ -18,17 +18,16 @@ package uk.gov.hmrc.testppnsmultibox.mocks
 
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 
-import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
-import uk.gov.hmrc.testppnsmultibox.services.TimeService
+import uk.gov.hmrc.testppnsmultibox.services.SleepService
 
-trait TimeServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
+trait SleepServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
 
-  val mockTimeService = mock[TimeService]
+  val mockSleepService = mock[SleepService]
 
-  object NotifyMeIn {
+  object SleepFor {
 
-    def returnsCorrelationId(correlationId: CorrelationId) = {
-      when(mockTimeService.notifyMeIn(*[Int], *[BoxId])(*)).thenReturn(correlationId)
+    def verifyCalledWith(millis: Long) = {
+      verify(mockSleepService).sleepFor(eqTo(millis))
     }
   }
 }

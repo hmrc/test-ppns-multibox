@@ -19,18 +19,39 @@ package uk.gov.hmrc.testppnsmultibox.services
 import java.time.Clock
 import java.time.temporal.ChronoUnit.MINUTES
 import javax.inject.{Inject, Singleton}
+import scala.concurrent.{ExecutionContext, Future, blocking}
+
+import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
+import uk.gov.hmrc.testppnsmultibox.ppns.connectors.PushPullNotificationConnector
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
 import uk.gov.hmrc.testppnsmultibox.repositories.TimedNotificationRepository
 
 @Singleton()
-class TimeService @Inject() (uuidService: UuidService, timedNotificationRepository: TimedNotificationRepository, clock: Clock) {
+class TimeService @Inject() (
+    uuidService: UuidService,
+    timedNotificationRepository: TimedNotificationRepository,
+    pushPullNotificationConnector: PushPullNotificationConnector,
+    sleepService: SleepService,
+    clock: Clock
+  )(implicit ec: ExecutionContext
+  ) {
 
-  def notifyMeIn(minutes: Int, boxId: BoxId): CorrelationId = {
+  def notifyMeIn(minutes: Int, boxId: BoxId)(implicit hc: HeaderCarrier): CorrelationId = {
     val correlationId = uuidService.correlationId
-    timedNotificationRepository.insert(TimedNotification(boxId, correlationId, notifyAt = clock.instant().plus(minutes, MINUTES)))
-    // TODO: Trigger asynchronous process
+    val notifyAt      = clock.instant().plus(minutes, MINUTES)
+    timedNotificationRepository.insert(TimedNotification(boxId, correlationId, notifyAt))
+    Future {
+      blocking {
+        sleepService.sleepFor(minutes * 60_000)
+      }
+    }.map { _ =>
+      pushPullNotificationConnector.postNotifications(boxId, correlationId, s"Notify at $notifyAt")
+        .map { notificationId =>
+          timedNotificationRepository.complete(boxId, correlationId, notificationId)
+        }
+    }
     correlationId
   }
 

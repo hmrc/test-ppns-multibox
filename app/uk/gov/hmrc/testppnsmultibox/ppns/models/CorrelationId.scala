@@ -25,5 +25,5 @@ case class CorrelationId(value: UUID) extends AnyVal
 object CorrelationId {
   implicit val format: Format[CorrelationId] = Json.valueFormat[CorrelationId]
 
-  def random: CorrelationId = CorrelationId(UUID.randomUUID())
+  def random = CorrelationId(UUID.randomUUID())
 }

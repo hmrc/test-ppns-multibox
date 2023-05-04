@@ -14,21 +14,11 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.mocks
+package uk.gov.hmrc.testppnsmultibox.services
 
-import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
+import javax.inject.Singleton
 
-import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
-import uk.gov.hmrc.testppnsmultibox.services.TimeService
-
-trait TimeServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
-
-  val mockTimeService = mock[TimeService]
-
-  object NotifyMeIn {
-
-    def returnsCorrelationId(correlationId: CorrelationId) = {
-      when(mockTimeService.notifyMeIn(*[Int], *[BoxId])(*)).thenReturn(correlationId)
-    }
-  }
+@Singleton
+class SleepService {
+  def sleepFor(millis: Long): Unit = Thread.sleep(millis)
 }

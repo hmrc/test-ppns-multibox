@@ -20,15 +20,17 @@ import java.util.concurrent.TimeUnit.SECONDS
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
-import org.mongodb.scala.model.Filters.equal
+import com.mongodb.client.model.ReturnDocument
+import org.mongodb.scala.model.Filters.{and, equal}
 import org.mongodb.scala.model.Indexes.ascending
-import org.mongodb.scala.model.{IndexModel, IndexOptions}
+import org.mongodb.scala.model.Updates.{combine, set}
+import org.mongodb.scala.model.{FindOneAndUpdateOptions, IndexModel, IndexOptions}
 
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
 import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
-import uk.gov.hmrc.testppnsmultibox.ppns.models.CorrelationId
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId, NotificationId}
 
 @Singleton
 class TimedNotificationRepository @Inject() (mongo: MongoComponent)(implicit val ec: ExecutionContext)
@@ -59,6 +61,17 @@ class TimedNotificationRepository @Inject() (mongo: MongoComponent)(implicit val
     collection.insertOne(timedNotification)
       .toFuture()
       .map(_ => timedNotification)
+  }
+
+  def complete(boxId: BoxId, correlationId: CorrelationId, notificationId: NotificationId): Future[Option[TimedNotification]] = {
+    collection.findOneAndUpdate(
+      filter = and(
+        equal("boxId", Codecs.toBson(boxId.value)),
+        equal("correlationId", Codecs.toBson(correlationId.value))
+      ),
+      update = combine(set("completed", Codecs.toBson(true)), set("notificationId", Codecs.toBson(notificationId.value))),
+      options = FindOneAndUpdateOptions().upsert(true).returnDocument(ReturnDocument.AFTER)
+    ).headOption()
   }
 
   def fetchByCorrelationId(correlationId: CorrelationId): Future[List[TimedNotification]] = {
