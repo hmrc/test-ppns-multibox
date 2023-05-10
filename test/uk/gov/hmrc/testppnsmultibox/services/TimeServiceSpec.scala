@@ -17,22 +17,32 @@
 package uk.gov.hmrc.testppnsmultibox.services
 
 import java.time.temporal.ChronoUnit.MINUTES
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import akka.actor.ActorSystem
+import akka.testkit.TestKitBase
+import org.scalatest.BeforeAndAfterAll
 import utils.{FixedClock, HmrcSpec}
 
 import uk.gov.hmrc.http.HeaderCarrier
 
+import uk.gov.hmrc.testppnsmultibox.actors.NotifyAtActor.NotifyAt
 import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
-import uk.gov.hmrc.testppnsmultibox.mocks.{PushPullNotificationConnectorMockModule, SleepServiceMockModule, TimedNotificationRepositoryMockModule, UuidServiceMockModule}
-import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, NotificationId}
+import uk.gov.hmrc.testppnsmultibox.mocks.{TimedNotificationRepositoryMockModule, UuidServiceMockModule}
+import uk.gov.hmrc.testppnsmultibox.ppns.models.BoxId
 
-class TimeServiceSpec extends HmrcSpec with FixedClock with UuidServiceMockModule with TimedNotificationRepositoryMockModule with PushPullNotificationConnectorMockModule
-    with SleepServiceMockModule {
+class TimeServiceSpec extends HmrcSpec with TestKitBase with UuidServiceMockModule with TimedNotificationRepositoryMockModule
+    with FixedClock with BeforeAndAfterAll {
+
+  implicit lazy val system = ActorSystem("TimeServiceSpec")
+
+  override protected def testActorName: String = "notify-at-actor"
+
+  override def afterAll(): Unit = shutdown(system)
 
   trait Setup {
     implicit val hc = HeaderCarrier()
-    val underTest   = new TimeService(mockUuidService, mockTimedNotificationRepository, mockPushPullNotificationConnector, mockSleepService, clock)
+
+    val underTest = new TimeService(mockUuidService, mockTimedNotificationRepository, testActor, clock)
   }
 
   "notifyMeIn" should {
@@ -44,22 +54,12 @@ class TimeServiceSpec extends HmrcSpec with FixedClock with UuidServiceMockModul
       val notifyAt          = instant.plus(minutes, MINUTES)
       val timedNotification = TimedNotification(boxId, fakeCorrelationId, notifyAt)
       Insert.returns(timedNotification)
-      
-      SleepFor.returnsImmediately()
-      
-      val notificationId = NotificationId.random
-      PostNotifications.returnsNotificationId(notificationId)
 
-      val result = underTest.notifyMeIn(minutes, boxId)
+      val correlationId = underTest.notifyMeIn(minutes, boxId)
 
+      correlationId shouldBe fakeCorrelationId
       Insert.verifyCalledWith(timedNotification)
-      result shouldBe fakeCorrelationId
-
-      // Verify that blocking Future performs its operation
-      Thread.sleep(500)
-      SleepFor.verifyCalledWith(minutes)
-      PostNotifications.verifyCalledWith(boxId, fakeCorrelationId, s"Notify at $notifyAt")
-      Complete.verifyCalledWith(boxId, fakeCorrelationId, notificationId)
+      expectMsg(NotifyAt(notifyAt, boxId, correlationId, hc))
     }
   }
 }

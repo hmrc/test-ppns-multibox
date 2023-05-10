@@ -18,13 +18,14 @@ package uk.gov.hmrc.testppnsmultibox.services
 
 import java.time.Clock
 import java.time.temporal.ChronoUnit.MINUTES
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import javax.inject.{Inject, Named, Singleton}
+
+import akka.actor.ActorRef
 
 import uk.gov.hmrc.http.HeaderCarrier
 
+import uk.gov.hmrc.testppnsmultibox.actors.NotifyAtActor.NotifyAt
 import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
-import uk.gov.hmrc.testppnsmultibox.ppns.connectors.PushPullNotificationConnector
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
 import uk.gov.hmrc.testppnsmultibox.repositories.TimedNotificationRepository
 
@@ -32,21 +33,15 @@ import uk.gov.hmrc.testppnsmultibox.repositories.TimedNotificationRepository
 class TimeService @Inject() (
     uuidService: UuidService,
     timedNotificationRepository: TimedNotificationRepository,
-    pushPullNotificationConnector: PushPullNotificationConnector,
-    sleepService: SleepService,
+    @Named("notify-at-actor") notifyAtActor: ActorRef,
     clock: Clock
-  )(implicit ec: ExecutionContext
   ) {
 
   def notifyMeIn(minutes: Int, boxId: BoxId)(implicit hc: HeaderCarrier): CorrelationId = {
     val correlationId = uuidService.correlationId
     val notifyAt      = clock.instant().plus(minutes, MINUTES)
     timedNotificationRepository.insert(TimedNotification(boxId, correlationId, notifyAt))
-    for {
-      _              <- sleepService.sleepFor(minutes)
-      notificationId <- pushPullNotificationConnector.postNotifications(boxId, correlationId, s"Notify at $notifyAt")
-      _              <- timedNotificationRepository.complete(boxId, correlationId, notificationId)
-    } yield ()
+    notifyAtActor ! NotifyAt(notifyAt, boxId, correlationId, hc)
     correlationId
   }
 

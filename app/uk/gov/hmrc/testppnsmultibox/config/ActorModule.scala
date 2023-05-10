@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.services
+package uk.gov.hmrc.testppnsmultibox.config
 
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future, blocking}
+import com.google.inject.AbstractModule
 
-@Singleton
-class SleepService @Inject() ()(implicit ec: ExecutionContext) {
+import play.api.libs.concurrent.AkkaGuiceSupport
 
-  def sleepFor(minutes: Int): Future[Unit] = Future { blocking { Thread.sleep(minutes * 60_000) } }
+import uk.gov.hmrc.testppnsmultibox.actors.NotifyAtActor
+
+class ActorModule extends AbstractModule with AkkaGuiceSupport {
+
+  override def configure() = bindActor[NotifyAtActor]("notify-at-actor")
 }

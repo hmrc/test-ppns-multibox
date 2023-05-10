@@ -30,20 +30,20 @@ trait TimedNotificationRepositoryMockModule extends MockitoSugar with ArgumentMa
 
   object Insert {
 
-    def returns(timedNotification: TimedNotification) = {
+    def returns(timedNotification: TimedNotification) =
       when(mockTimedNotificationRepository.insert(*[TimedNotification])).thenReturn(successful(timedNotification))
-    }
 
-    def verifyCalledWith(timedNotification: TimedNotification) = {
+    def verifyCalledWith(timedNotification: TimedNotification) =
       verify(mockTimedNotificationRepository).insert(eqTo(timedNotification))
-    }
   }
 
   object Complete {
 
-    def verifyCalledWith(boxId: BoxId, correlationId: CorrelationId, notificationId: NotificationId) = {
+    def verifyNotCalled() =
+      verify(mockTimedNotificationRepository, never).complete(*[BoxId], *[CorrelationId], *[NotificationId])
+
+    def verifyCalledWith(boxId: BoxId, correlationId: CorrelationId, notificationId: NotificationId) =
       verify(mockTimedNotificationRepository).complete(eqTo(boxId), eqTo(correlationId), eqTo(notificationId))
-    }
   }
 
 }

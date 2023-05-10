@@ -41,9 +41,11 @@ trait PushPullNotificationConnectorMockModule extends MockitoSugar with Argument
 
   object PostNotifications {
 
-    def returnsNotificationId(notificationId: NotificationId) = {
+    def returnsNotificationId(notificationId: NotificationId) =
       when(mockPushPullNotificationConnector.postNotifications(*[BoxId], *[CorrelationId], *)(*)).thenReturn(successful(notificationId))
-    }
+
+    def verifyNotCalled() =
+      verify(mockPushPullNotificationConnector, never).postNotifications(*[BoxId], *[CorrelationId], *)(*)
 
     def verifyCalledWith(boxId: BoxId, correlationId: CorrelationId, message: String) =
       verify(mockPushPullNotificationConnector).postNotifications(eqTo(boxId), eqTo(correlationId), eqTo(message))(*)
