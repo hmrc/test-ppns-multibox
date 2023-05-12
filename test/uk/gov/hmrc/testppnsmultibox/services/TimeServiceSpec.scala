@@ -16,33 +16,30 @@
 
 package uk.gov.hmrc.testppnsmultibox.services
 
-import java.time.temporal.ChronoUnit.MINUTES
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.DurationInt
 
 import akka.actor.ActorSystem
-import akka.testkit.TestKitBase
 import org.scalatest.BeforeAndAfterAll
 import utils.{FixedClock, HmrcSpec}
 
+import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.testppnsmultibox.actors.NotifyAtActor.NotifyAt
 import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
-import uk.gov.hmrc.testppnsmultibox.mocks.{TimedNotificationRepositoryMockModule, UuidServiceMockModule}
-import uk.gov.hmrc.testppnsmultibox.ppns.models.BoxId
+import uk.gov.hmrc.testppnsmultibox.mocks.{PushPullNotificationConnectorMockModule, TimedNotificationRepositoryMockModule, UuidServiceMockModule}
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, NotificationId}
 
-class TimeServiceSpec extends HmrcSpec with TestKitBase with UuidServiceMockModule with TimedNotificationRepositoryMockModule
-    with FixedClock with BeforeAndAfterAll {
+class TimeServiceSpec extends HmrcSpec with UuidServiceMockModule with TimedNotificationRepositoryMockModule with PushPullNotificationConnectorMockModule
+    with FixedClock with BeforeAndAfterAll with FutureAwaits with DefaultAwaitTimeout {
 
-  implicit lazy val system = ActorSystem("TimeServiceSpec")
+  val system = ActorSystem("TimeServiceSpec")
 
-  override protected def testActorName: String = "notify-at-actor"
-
-  override def afterAll(): Unit = shutdown(system)
+  override def afterAll(): Unit = await(system.terminate())
 
   trait Setup {
     implicit val hc = HeaderCarrier()
-
-    val underTest = new TimeService(mockUuidService, mockTimedNotificationRepository, testActor, clock)
+    val underTest   = new TimeService(mockUuidService, mockTimedNotificationRepository, mockPushPullNotificationConnector, system, clock)
   }
 
   "notifyMeIn" should {
@@ -50,16 +47,27 @@ class TimeServiceSpec extends HmrcSpec with TestKitBase with UuidServiceMockModu
       CorrelationIdGenerator.returnsFakeCorrelationId
 
       val boxId             = BoxId.random
-      val minutes           = 1
-      val notifyAt          = instant.plus(minutes, MINUTES)
+      val delay             = 3.seconds
+      val notifyAt          = instant.plusMillis(delay.toMillis)
       val timedNotification = TimedNotification(boxId, fakeCorrelationId, notifyAt)
       Insert.returns(timedNotification)
 
-      val correlationId = underTest.notifyMeIn(minutes, boxId)
+      val notificationId = NotificationId.random
+      PostNotifications.returnsNotificationId(notificationId)
+
+      val correlationId = underTest.notifyMeAfter(delay, boxId)
 
       correlationId shouldBe fakeCorrelationId
       Insert.verifyCalledWith(timedNotification)
-      expectMsg(NotifyAt(notifyAt, boxId, correlationId, hc))
+
+      Thread.sleep(delay.toMillis - 1_000)
+      Complete.verifyNotCalled()
+      PostNotifications.verifyNotCalled()
+
+      // Verify that scheduler performs its operation
+      Thread.sleep(2_000)
+      PostNotifications.verifyCalledWith(boxId, correlationId, s"Notify at $notifyAt")
+      Complete.verifyCalledWith(boxId, correlationId, notificationId)
     }
   }
 }

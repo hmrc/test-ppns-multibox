@@ -48,13 +48,13 @@ class TimeControllerSpec extends HmrcSpec with ActionBuildersMockModule with Tim
 
   "notifyMeIn" should {
     "return 202 and a NotificationResponse body" in new Setup {
-      val minutes           = 1
+      val seconds           = 1
       val fakeBoxId         = BoxId.random
       val fakeCorrelationId = CorrelationId.random
       ActionWithBoxId.fetchesBoxId(fakeBoxId)
       NotifyMeIn.returnsCorrelationId(fakeCorrelationId)
 
-      val result = underTest.notifyMeIn(minutes)(fakeRequest)
+      val result = underTest.notifyMeIn(seconds)(fakeRequest)
 
       status(result) shouldBe Status.ACCEPTED
       contentAsJson(result) shouldBe Json.toJson(NotificationResponse(fakeBoxId, fakeCorrelationId))

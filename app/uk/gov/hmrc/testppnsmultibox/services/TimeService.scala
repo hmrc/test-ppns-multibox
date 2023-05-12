@@ -17,15 +17,16 @@
 package uk.gov.hmrc.testppnsmultibox.services
 
 import java.time.Clock
-import java.time.temporal.ChronoUnit.MINUTES
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.{Inject, Singleton}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.FiniteDuration
 
-import akka.actor.ActorRef
+import akka.actor.ActorSystem
 
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.testppnsmultibox.actors.NotifyAtActor.NotifyAt
 import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
+import uk.gov.hmrc.testppnsmultibox.ppns.connectors.PushPullNotificationConnector
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
 import uk.gov.hmrc.testppnsmultibox.repositories.TimedNotificationRepository
 
@@ -33,15 +34,25 @@ import uk.gov.hmrc.testppnsmultibox.repositories.TimedNotificationRepository
 class TimeService @Inject() (
     uuidService: UuidService,
     timedNotificationRepository: TimedNotificationRepository,
-    @Named("notify-at-actor") notifyAtActor: ActorRef,
+    pushPullNotificationConnector: PushPullNotificationConnector,
+    actorSystem: ActorSystem,
     clock: Clock
+  )(implicit ec: ExecutionContext
   ) {
 
-  def notifyMeIn(minutes: Int, boxId: BoxId)(implicit hc: HeaderCarrier): CorrelationId = {
+  def notifyMeAfter(delay: FiniteDuration, boxId: BoxId)(implicit hc: HeaderCarrier): CorrelationId = {
     val correlationId = uuidService.correlationId
-    val notifyAt      = clock.instant().plus(minutes, MINUTES)
+    val notifyAt      = clock.instant.plusMillis(delay.toMillis)
     timedNotificationRepository.insert(TimedNotification(boxId, correlationId, notifyAt))
-    notifyAtActor ! NotifyAt(notifyAt, boxId, correlationId, hc)
+
+    val job: Runnable = () => {
+      pushPullNotificationConnector.postNotifications(boxId, correlationId, s"Notify at $notifyAt")
+        .flatMap(notificationId =>
+          timedNotificationRepository.complete(boxId, correlationId, notificationId)
+        )
+    }
+    actorSystem.scheduler.scheduleOnce(delay, job)
+
     correlationId
   }
 

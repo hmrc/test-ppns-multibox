@@ -19,6 +19,7 @@ package uk.gov.hmrc.testppnsmultibox.controllers
 import java.time.Instant
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -50,9 +51,9 @@ class TimeController @Inject() (timeService: TimeService, actionBuilders: Action
     Future.successful(Ok(Json.toJson(TimeResponse(Instant.now()))))
   }
 
-  def notifyMeIn(minutes: Int): Action[AnyContent] = actionWithBoxId.async { implicit requestWithBoxId =>
+  def notifyMeIn(seconds: Int): Action[AnyContent] = actionWithBoxId.async { implicit requestWithBoxId =>
     val boxId         = requestWithBoxId.boxId
-    val correlationId = timeService.notifyMeIn(minutes, boxId)
+    val correlationId = timeService.notifyMeAfter(seconds.seconds, boxId)
     Future.successful(Accepted(Json.toJson(NotificationResponse(boxId, correlationId))))
   }
 }

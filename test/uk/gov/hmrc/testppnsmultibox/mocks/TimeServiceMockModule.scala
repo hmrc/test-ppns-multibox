@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.testppnsmultibox.mocks
 
+import scala.concurrent.duration.FiniteDuration
+
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
@@ -28,6 +30,6 @@ trait TimeServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
   object NotifyMeIn {
 
     def returnsCorrelationId(correlationId: CorrelationId) =
-      when(mockTimeService.notifyMeIn(*[Int], *[BoxId])(*)).thenReturn(correlationId)
+      when(mockTimeService.notifyMeAfter(*[FiniteDuration], *[BoxId])(*)).thenReturn(correlationId)
   }
 }

@@ -76,21 +76,21 @@ paths:
       security:
       - {}
 
-  /notify-me-in/{minutes}:
+  /notify-me-in/{seconds}:
     get:
       tags:
         - test-ppns-multibox
-      summary: Take minutes to return the current time
+      summary: Take seconds to return the current time
       description: >
-        An endpoint that takes the requested number of minutes to return the current server time.
+        An endpoint that takes the requested number of seconds to return the current server time.
       parameters:
         - $ref: '#/components/parameters/acceptHeader'
         - in: path
-          name: minutes
+          name: seconds
           schema:
             type: integer
           required: true
-          description: Number of minutes to notification
+          description: Number of seconds to notification
       responses:
         '202':
           description: 'ACCEPTED Response'
