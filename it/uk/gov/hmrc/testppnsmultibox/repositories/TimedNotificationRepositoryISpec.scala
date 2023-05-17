@@ -16,22 +16,24 @@
 
 package uk.gov.hmrc.testppnsmultibox.repositories
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit.{HOURS, MILLIS}
+
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import utils.AsyncHmrcSpec
+
 import play.api.Configuration
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
-import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
-import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
-import utils.AsyncHmrcSpec
 
-import java.time.Instant
-import java.time.temporal.ChronoUnit.{HOURS, MILLIS}
+import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId, NotificationId}
 
 class TimedNotificationRepositoryISpec extends AsyncHmrcSpec
     with GuiceOneAppPerSuite with BeforeAndAfterEach with PlayMongoRepositorySupport[TimedNotification] {
-  
+
   val stubConfig = Configuration(
     "mongodb.uri" -> s"mongodb://127.0.0.1:27017/test-${this.getClass.getSimpleName}"
   )
@@ -49,22 +51,39 @@ class TimedNotificationRepositoryISpec extends AsyncHmrcSpec
     prepareDatabase()
   }
 
-  val fakeBoxId         = BoxId("box-id")
-  val fakeCorrelationId = CorrelationId.random
-  val notifyAt          = Instant.now().truncatedTo(MILLIS)
-  val timedNotification = TimedNotification(fakeBoxId, fakeCorrelationId, notifyAt)
+  val fakeBoxId          = BoxId.random
+  val fakeCorrelationId  = CorrelationId.random
+  val notifyAt           = Instant.now().truncatedTo(MILLIS)
+  val timedNotification  = TimedNotification(fakeBoxId, fakeCorrelationId, notifyAt)
+  val fakeNotificationId = NotificationId.random
 
   "insert" should {
 
     "create a timed notification" in {
       await(repoUnderTest.insert(timedNotification))
-      val fetchedRecords = await(repoUnderTest.collection.find().toFuture())
-      val fetchedBox     = fetchedRecords.head
-      fetchedBox.boxId shouldBe fakeBoxId
-      fetchedBox.correlationId shouldBe fakeCorrelationId
-      fetchedBox.notifyAt shouldBe notifyAt
-      fetchedBox.completed shouldBe false
-      fetchedBox.expiresAt shouldBe notifyAt.plus(1, HOURS)
+
+      val insertedNotification = await(repoUnderTest.collection.find().first().toFuture())
+      insertedNotification.boxId shouldBe fakeBoxId
+      insertedNotification.correlationId shouldBe fakeCorrelationId
+      insertedNotification.notifyAt shouldBe notifyAt
+      insertedNotification.completed shouldBe false
+      insertedNotification.expiresAt shouldBe notifyAt.plus(1, HOURS)
+    }
+  }
+
+  "complete" should {
+
+    "update a timed notification" in {
+      await(repoUnderTest.collection.insertOne(timedNotification).toFuture())
+
+      await(repoUnderTest.complete(fakeBoxId, fakeCorrelationId, fakeNotificationId))
+
+      val completedNotification = await(repoUnderTest.collection.find().first().toFuture())
+      completedNotification.boxId shouldBe fakeBoxId
+      completedNotification.correlationId shouldBe fakeCorrelationId
+      completedNotification.notifyAt shouldBe notifyAt
+      completedNotification.completed shouldBe true
+      completedNotification.notificationId shouldBe Some(fakeNotificationId)
     }
   }
 }

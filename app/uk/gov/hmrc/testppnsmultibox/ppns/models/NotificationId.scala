@@ -20,10 +20,10 @@ import java.util.UUID
 
 import play.api.libs.json.{Format, Json}
 
-case class CorrelationId(value: UUID) extends AnyVal
+case class NotificationId(value: UUID) extends AnyVal
 
-object CorrelationId {
-  implicit val format: Format[CorrelationId] = Json.valueFormat[CorrelationId]
+object NotificationId {
+  implicit val format: Format[NotificationId] = Json.valueFormat[NotificationId]
 
-  def random = CorrelationId(UUID.randomUUID())
+  def random = NotificationId(UUID.randomUUID())
 }

@@ -16,32 +16,58 @@
 
 package uk.gov.hmrc.testppnsmultibox.services
 
-import java.time.temporal.ChronoUnit.MINUTES
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.DurationInt
 
+import akka.actor.ActorSystem
+import org.scalatest.BeforeAndAfterAll
 import utils.{FixedClock, HmrcSpec}
 
-import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
-import uk.gov.hmrc.testppnsmultibox.mocks.{TimedNotificationRepositoryMockModule, UuidServiceMockModule}
-import uk.gov.hmrc.testppnsmultibox.ppns.models.BoxId
+import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
+import uk.gov.hmrc.http.HeaderCarrier
 
-class TimeServiceSpec extends HmrcSpec with FixedClock with UuidServiceMockModule with TimedNotificationRepositoryMockModule {
+import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
+import uk.gov.hmrc.testppnsmultibox.mocks.{PushPullNotificationConnectorMockModule, TimedNotificationRepositoryMockModule, UuidServiceMockModule}
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, NotificationId}
+
+class TimeServiceSpec extends HmrcSpec with UuidServiceMockModule with TimedNotificationRepositoryMockModule with PushPullNotificationConnectorMockModule
+    with FixedClock with BeforeAndAfterAll with FutureAwaits with DefaultAwaitTimeout {
+
+  val system = ActorSystem("TimeServiceSpec")
+
+  override def afterAll(): Unit = await(system.terminate())
 
   trait Setup {
-    val underTest = new TimeService(mockUuidService, mockTimedNotificationRepository, clock)
+    implicit val hc = HeaderCarrier()
+    val underTest   = new TimeService(mockUuidService, mockTimedNotificationRepository, mockPushPullNotificationConnector, system, clock)
   }
 
   "notifyMeIn" should {
-    "return a correlation ID" in new Setup {
-      val boxId             = BoxId("box-id")
-      val minutes           = 1
-      val timedNotification = TimedNotification(boxId, fakeCorrelationId, instant.plus(minutes, MINUTES))
+    "return a correlation ID and perform an asynchronous action" in new Setup {
       CorrelationIdGenerator.returnsFakeCorrelationId
 
-      val result = underTest.notifyMeIn(minutes, boxId)
+      val boxId             = BoxId.random
+      val delay             = 3.seconds
+      val notifyAt          = instant.plusMillis(delay.toMillis)
+      val timedNotification = TimedNotification(boxId, fakeCorrelationId, notifyAt)
+      Insert.returns(timedNotification)
 
+      val notificationId = NotificationId.random
+      PostNotifications.returnsNotificationId(notificationId)
+
+      val correlationId = underTest.notifyMeAfter(delay, boxId)
+
+      correlationId shouldBe fakeCorrelationId
       Insert.verifyCalledWith(timedNotification)
-      // TODO: Verify that future is created
-      result shouldBe fakeCorrelationId
+
+      Thread.sleep(delay.toMillis - 1_000)
+      Complete.verifyNotCalled()
+      PostNotifications.verifyNotCalled()
+
+      // Verify that scheduler performs its operation
+      Thread.sleep(2_000)
+      PostNotifications.verifyCalledWith(boxId, correlationId, s"Notify at $notifyAt")
+      Complete.verifyCalledWith(boxId, correlationId, notificationId)
     }
   }
 }

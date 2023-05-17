@@ -17,20 +17,42 @@
 package uk.gov.hmrc.testppnsmultibox.services
 
 import java.time.Clock
-import java.time.temporal.ChronoUnit.MINUTES
 import javax.inject.{Inject, Singleton}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.FiniteDuration
+
+import akka.actor.ActorSystem
+
+import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
+import uk.gov.hmrc.testppnsmultibox.ppns.connectors.PushPullNotificationConnector
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
 import uk.gov.hmrc.testppnsmultibox.repositories.TimedNotificationRepository
 
 @Singleton()
-class TimeService @Inject() (uuidService: UuidService, timedNotificationRepository: TimedNotificationRepository, clock: Clock) {
+class TimeService @Inject() (
+    uuidService: UuidService,
+    timedNotificationRepository: TimedNotificationRepository,
+    pushPullNotificationConnector: PushPullNotificationConnector,
+    actorSystem: ActorSystem,
+    clock: Clock
+  )(implicit ec: ExecutionContext
+  ) {
 
-  def notifyMeIn(minutes: Int, boxId: BoxId): CorrelationId = {
+  def notifyMeAfter(delay: FiniteDuration, boxId: BoxId)(implicit hc: HeaderCarrier): CorrelationId = {
     val correlationId = uuidService.correlationId
-    timedNotificationRepository.insert(TimedNotification(boxId, correlationId, notifyAt = clock.instant().plus(minutes, MINUTES)))
-    // TODO: Trigger asynchronous process
+    val notifyAt      = clock.instant.plusMillis(delay.toMillis)
+    timedNotificationRepository.insert(TimedNotification(boxId, correlationId, notifyAt))
+
+    val job: Runnable = () => {
+      pushPullNotificationConnector.postNotifications(boxId, correlationId, s"Notify at $notifyAt")
+        .flatMap(notificationId =>
+          timedNotificationRepository.complete(boxId, correlationId, notificationId)
+        )
+    }
+    actorSystem.scheduler.scheduleOnce(delay, job)
+
     correlationId
   }
 

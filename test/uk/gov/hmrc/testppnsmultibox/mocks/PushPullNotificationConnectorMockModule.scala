@@ -21,7 +21,7 @@ import scala.concurrent.Future.successful
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 
 import uk.gov.hmrc.testppnsmultibox.ppns.connectors.PushPullNotificationConnector
-import uk.gov.hmrc.testppnsmultibox.ppns.models.BoxId
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId, NotificationId}
 
 trait PushPullNotificationConnectorMockModule extends MockitoSugar with ArgumentMatchersSugar {
 
@@ -35,7 +35,20 @@ trait PushPullNotificationConnectorMockModule extends MockitoSugar with Argument
     def returnsNoBox() =
       when(mockPushPullNotificationConnector.getBoxId(*, *)(*)).thenReturn(successful(None))
 
-    def verifyCalledWith(boxName: String, clientId: String) =
+    def verifyCalledAtLeastOnceWith(boxName: String, clientId: String) =
       verify(mockPushPullNotificationConnector, atLeastOnce).getBoxId(eqTo(boxName), eqTo(clientId))(*)
   }
+
+  object PostNotifications {
+
+    def returnsNotificationId(notificationId: NotificationId) =
+      when(mockPushPullNotificationConnector.postNotifications(*[BoxId], *[CorrelationId], *)(*)).thenReturn(successful(notificationId))
+
+    def verifyNotCalled() =
+      verify(mockPushPullNotificationConnector, never).postNotifications(*[BoxId], *[CorrelationId], *)(*)
+
+    def verifyCalledWith(boxId: BoxId, correlationId: CorrelationId, message: String) =
+      verify(mockPushPullNotificationConnector).postNotifications(eqTo(boxId), eqTo(correlationId), eqTo(message))(*)
+  }
+
 }

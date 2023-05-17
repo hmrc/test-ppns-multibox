@@ -22,6 +22,7 @@ import play.api.http.Status
 import play.api.libs.json.Json
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
+import uk.gov.hmrc.http.HeaderCarrier
 
 import uk.gov.hmrc.testppnsmultibox.mocks.{ActionBuildersMockModule, TimeServiceMockModule}
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
@@ -29,6 +30,7 @@ import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
 class TimeControllerSpec extends HmrcSpec with ActionBuildersMockModule with TimeServiceMockModule {
 
   trait Setup {
+    implicit val hc = HeaderCarrier()
     val fakeRequest = FakeRequest()
 
     val underTest = new TimeController(mockTimeService, mockActionBuilders)(Helpers.stubControllerComponents())
@@ -46,13 +48,13 @@ class TimeControllerSpec extends HmrcSpec with ActionBuildersMockModule with Tim
 
   "notifyMeIn" should {
     "return 202 and a NotificationResponse body" in new Setup {
-      val minutes           = 1
-      val fakeBoxId         = BoxId("box-id")
+      val seconds           = 1
+      val fakeBoxId         = BoxId.random
       val fakeCorrelationId = CorrelationId.random
       ActionWithBoxId.fetchesBoxId(fakeBoxId)
       NotifyMeIn.returnsCorrelationId(fakeCorrelationId)
 
-      val result = underTest.notifyMeIn(minutes)(fakeRequest)
+      val result = underTest.notifyMeIn(seconds)(fakeRequest)
 
       status(result) shouldBe Status.ACCEPTED
       contentAsJson(result) shouldBe Json.toJson(NotificationResponse(fakeBoxId, fakeCorrelationId))

@@ -16,10 +16,14 @@
 
 package uk.gov.hmrc.testppnsmultibox.ppns.models
 
+import java.util.UUID
+
 import play.api.libs.json.{Format, Json}
 
-case class BoxId(value: String) extends AnyVal
+case class BoxId(value: UUID) extends AnyVal
 
 object BoxId {
   implicit val format: Format[BoxId] = Json.valueFormat[BoxId]
+
+  def random = BoxId(UUID.randomUUID())
 }
