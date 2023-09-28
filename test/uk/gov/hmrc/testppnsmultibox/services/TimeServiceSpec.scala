@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.testppnsmultibox.services
 
+import java.time.temporal.ChronoUnit.HOURS
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 
@@ -26,8 +27,8 @@ import utils.{FixedClock, HmrcSpec}
 import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
 import uk.gov.hmrc.testppnsmultibox.mocks.{PushPullNotificationConnectorMockModule, TimedNotificationRepositoryMockModule, UuidServiceMockModule}
+import uk.gov.hmrc.testppnsmultibox.models.TimedNotification
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, NotificationId}
 
 class TimeServiceSpec extends HmrcSpec with UuidServiceMockModule with TimedNotificationRepositoryMockModule with PushPullNotificationConnectorMockModule
@@ -49,11 +50,11 @@ class TimeServiceSpec extends HmrcSpec with UuidServiceMockModule with TimedNoti
       val boxId             = BoxId.random
       val delay             = 3.seconds
       val notifyAt          = instant.plusMillis(delay.toMillis)
-      val timedNotification = TimedNotification(boxId, fakeCorrelationId, notifyAt)
+      val timedNotification = TimedNotification(boxId, fakeCorrelationId, notifyAt, notifyAt.plus(1, HOURS))
       Insert.returns(timedNotification)
 
       val notificationId = NotificationId.random
-      PostNotifications.returnsNotificationId(notificationId)
+      PostNotifications.returns(notificationId)
 
       val correlationId = underTest.notifyMeAfter(delay, boxId)
 

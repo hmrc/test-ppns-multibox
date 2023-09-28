@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.ppns
+package uk.gov.hmrc.testppnsmultibox.ppns.services
 
 import javax.inject.{Inject, Singleton}
+import scala.concurrent.Future
 
-import play.api.mvc.{ActionBuilder, AnyContent, DefaultActionBuilder}
+import uk.gov.hmrc.http.HeaderCarrier
+
+import uk.gov.hmrc.testppnsmultibox.config.AppConfig
+import uk.gov.hmrc.testppnsmultibox.ppns.connectors.PushPullNotificationConnector
+import uk.gov.hmrc.testppnsmultibox.ppns.models.BoxId
 
 @Singleton
-class ActionBuilders @Inject() (defaultActionBuilder: DefaultActionBuilder, boxIdTransformer: BoxIdTransformer) {
+class BoxService @Inject() (appConfig: AppConfig, pushPullNotificationConnector: PushPullNotificationConnector) {
 
-  def actionWithBoxId: ActionBuilder[RequestWithBoxId, AnyContent] =
-    defaultActionBuilder
-      .andThen(boxIdTransformer)
+  def getBoxId(clientId: String)(implicit hc: HeaderCarrier): Future[Option[BoxId]] = {
+    pushPullNotificationConnector.getBoxId(s"${appConfig.apiContext}##${appConfig.apiVersion}##callbackUrl", clientId)
+  }
 }

@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.ppns
+package uk.gov.hmrc.testppnsmultibox.connectors
 
-case class MissingClientIdException(message: String) extends Exception(message)
+import javax.inject.{Inject, Singleton}
 
-case class MissingBoxException(message: String) extends Exception(message)
+import uk.gov.hmrc.auth.core.PlayAuthConnector
+import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+
+@Singleton
+class AuthConnector @Inject() (override val http: HttpClient, servicesConfig: ServicesConfig) extends PlayAuthConnector {
+  override val serviceUrl: String = servicesConfig.baseUrl("auth")
+}

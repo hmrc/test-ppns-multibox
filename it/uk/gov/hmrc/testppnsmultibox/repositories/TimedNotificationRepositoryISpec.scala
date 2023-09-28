@@ -28,7 +28,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 
-import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
+import uk.gov.hmrc.testppnsmultibox.models.TimedNotification
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId, NotificationId}
 
 class TimedNotificationRepositoryISpec extends AsyncHmrcSpec
@@ -54,7 +54,8 @@ class TimedNotificationRepositoryISpec extends AsyncHmrcSpec
   val fakeBoxId          = BoxId.random
   val fakeCorrelationId  = CorrelationId.random
   val notifyAt           = Instant.now().truncatedTo(MILLIS)
-  val timedNotification  = TimedNotification(fakeBoxId, fakeCorrelationId, notifyAt)
+  val expiresAt          = notifyAt.plus(1, HOURS)
+  val timedNotification  = TimedNotification(fakeBoxId, fakeCorrelationId, notifyAt, expiresAt)
   val fakeNotificationId = NotificationId.random
 
   "insert" should {
@@ -63,11 +64,7 @@ class TimedNotificationRepositoryISpec extends AsyncHmrcSpec
       await(repoUnderTest.insert(timedNotification))
 
       val insertedNotification = await(repoUnderTest.collection.find().first().toFuture())
-      insertedNotification.boxId shouldBe fakeBoxId
-      insertedNotification.correlationId shouldBe fakeCorrelationId
-      insertedNotification.notifyAt shouldBe notifyAt
-      insertedNotification.completed shouldBe false
-      insertedNotification.expiresAt shouldBe notifyAt.plus(1, HOURS)
+      insertedNotification shouldBe timedNotification
     }
   }
 
@@ -79,11 +76,10 @@ class TimedNotificationRepositoryISpec extends AsyncHmrcSpec
       await(repoUnderTest.complete(fakeBoxId, fakeCorrelationId, fakeNotificationId))
 
       val completedNotification = await(repoUnderTest.collection.find().first().toFuture())
-      completedNotification.boxId shouldBe fakeBoxId
-      completedNotification.correlationId shouldBe fakeCorrelationId
-      completedNotification.notifyAt shouldBe notifyAt
-      completedNotification.completed shouldBe true
-      completedNotification.notificationId shouldBe Some(fakeNotificationId)
+      completedNotification shouldBe timedNotification.copy(
+        completed = true,
+        notificationId = Some(fakeNotificationId)
+      )
     }
   }
 }
