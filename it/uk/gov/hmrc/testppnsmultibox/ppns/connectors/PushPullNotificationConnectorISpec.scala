@@ -17,7 +17,6 @@
 package uk.gov.hmrc.testppnsmultibox.ppns.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import utils.AsyncHmrcSpec

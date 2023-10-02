@@ -26,6 +26,7 @@ lazy val microservice = Project(appName, file("."))
     IntegrationTest / unmanagedSourceDirectories += baseDirectory.value / "testcommon"
   )
   .settings(resolvers += Resolver.jcenterRepo)
+  .settings(inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest)))
   .settings(CodeCoverageSettings.settings: _*)
   .settings(
     scalacOptions ++= Seq(

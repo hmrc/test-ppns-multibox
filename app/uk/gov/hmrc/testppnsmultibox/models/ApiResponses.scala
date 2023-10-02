@@ -14,8 +14,28 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.ppns
+package uk.gov.hmrc.testppnsmultibox.models
 
-object CustomHeaders {
-  val XClientId = "X-Client-ID"
+import java.time.Instant
+
+import play.api.libs.json.Json
+
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
+
+case class TimeResponse(message: Instant)
+
+object TimeResponse {
+  implicit val format = Json.format[TimeResponse]
+}
+
+case class NotificationResponse(boxId: BoxId, correlationId: CorrelationId)
+
+object NotificationResponse {
+  implicit val format = Json.format[NotificationResponse]
+}
+
+case class ErrorResponse(message: String)
+
+object ErrorResponse {
+  implicit val format = Json.format[ErrorResponse]
 }

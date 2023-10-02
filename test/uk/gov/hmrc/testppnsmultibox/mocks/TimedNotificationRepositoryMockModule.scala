@@ -20,7 +20,7 @@ import scala.concurrent.Future.successful
 
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 
-import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
+import uk.gov.hmrc.testppnsmultibox.models.TimedNotification
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId, NotificationId}
 import uk.gov.hmrc.testppnsmultibox.repositories.TimedNotificationRepository
 

@@ -29,7 +29,7 @@ import org.mongodb.scala.model.{FindOneAndUpdateOptions, IndexModel, IndexOption
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
-import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
+import uk.gov.hmrc.testppnsmultibox.models.TimedNotification
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId, NotificationId}
 
 @Singleton

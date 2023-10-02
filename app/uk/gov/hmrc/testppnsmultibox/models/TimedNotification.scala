@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.testppnsmultibox.domain.models
+package uk.gov.hmrc.testppnsmultibox.models
 
 import java.time.Instant
-import java.time.temporal.ChronoUnit.HOURS
 
 import play.api.libs.json.Json
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId, NotificationId}
 
-case class TimedNotification(boxId: BoxId, correlationId: CorrelationId, notifyAt: Instant, completed: Boolean = false, notificationId: Option[NotificationId] = None) {
-  val expiresAt = notifyAt.plus(1, HOURS)
-}
+case class TimedNotification(
+    boxId: BoxId,
+    correlationId: CorrelationId,
+    notifyAt: Instant,
+    expiresAt: Instant,
+    completed: Boolean = false,
+    notificationId: Option[NotificationId] = None
+  )
 
 object TimedNotification {
 

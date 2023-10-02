@@ -29,19 +29,19 @@ trait PushPullNotificationConnectorMockModule extends MockitoSugar with Argument
 
   object GetBoxId {
 
-    def returnsBoxId(boxId: BoxId) =
+    def returns(boxId: BoxId) =
       when(mockPushPullNotificationConnector.getBoxId(*, *)(*)).thenReturn(successful(Some(boxId)))
 
     def returnsNoBox() =
       when(mockPushPullNotificationConnector.getBoxId(*, *)(*)).thenReturn(successful(None))
 
-    def verifyCalledAtLeastOnceWith(boxName: String, clientId: String) =
-      verify(mockPushPullNotificationConnector, atLeastOnce).getBoxId(eqTo(boxName), eqTo(clientId))(*)
+    def verifyCalledWith(boxName: String, clientId: String) =
+      verify(mockPushPullNotificationConnector).getBoxId(eqTo(boxName), eqTo(clientId))(*)
   }
 
   object PostNotifications {
 
-    def returnsNotificationId(notificationId: NotificationId) =
+    def returns(notificationId: NotificationId) =
       when(mockPushPullNotificationConnector.postNotifications(*[BoxId], *[CorrelationId], *)(*)).thenReturn(successful(notificationId))
 
     def verifyNotCalled() =

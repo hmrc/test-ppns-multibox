@@ -17,6 +17,7 @@
 package uk.gov.hmrc.testppnsmultibox.services
 
 import java.time.Clock
+import java.time.temporal.ChronoUnit.HOURS
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
@@ -25,7 +26,7 @@ import akka.actor.ActorSystem
 
 import uk.gov.hmrc.http.HeaderCarrier
 
-import uk.gov.hmrc.testppnsmultibox.domain.models.TimedNotification
+import uk.gov.hmrc.testppnsmultibox.models.TimedNotification
 import uk.gov.hmrc.testppnsmultibox.ppns.connectors.PushPullNotificationConnector
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
 import uk.gov.hmrc.testppnsmultibox.repositories.TimedNotificationRepository
@@ -43,7 +44,7 @@ class TimeService @Inject() (
   def notifyMeAfter(delay: FiniteDuration, boxId: BoxId)(implicit hc: HeaderCarrier): CorrelationId = {
     val correlationId = uuidService.correlationId
     val notifyAt      = clock.instant.plusMillis(delay.toMillis)
-    timedNotificationRepository.insert(TimedNotification(boxId, correlationId, notifyAt))
+    timedNotificationRepository.insert(TimedNotification(boxId, correlationId, notifyAt, notifyAt.plus(1, HOURS)))
 
     val job: Runnable = () => {
       pushPullNotificationConnector.postNotifications(boxId, correlationId, s"Notify at $notifyAt")

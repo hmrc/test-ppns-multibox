@@ -16,20 +16,26 @@
 
 package uk.gov.hmrc.testppnsmultibox.mocks
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.Future
 
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 
-import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
-import uk.gov.hmrc.testppnsmultibox.services.TimeService
+import uk.gov.hmrc.testppnsmultibox.ppns.models.BoxId
+import uk.gov.hmrc.testppnsmultibox.ppns.services.BoxService
 
-trait TimeServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
+trait BoxServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
 
-  val mockTimeService = mock[TimeService]
+  val mockBoxService = mock[BoxService]
 
-  object NotifyMeIn {
+  object GetBoxId {
 
-    def returns(correlationId: CorrelationId) =
-      when(mockTimeService.notifyMeAfter(*[FiniteDuration], *[BoxId])(*)).thenReturn(correlationId)
+    def returns(boxId: BoxId) =
+      when(mockBoxService.getBoxId(*)(*)).thenReturn(Future.successful(Some(boxId)))
+
+    def returnsNoBox() =
+      when(mockBoxService.getBoxId(*)(*)).thenReturn(Future.successful(None))
+
+    def verifyCalledWith(clientId: String) =
+      verify(mockBoxService).getBoxId(eqTo(clientId))(*)
   }
 }
