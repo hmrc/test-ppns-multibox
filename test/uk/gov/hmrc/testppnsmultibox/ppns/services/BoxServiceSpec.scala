@@ -62,4 +62,16 @@ class BoxServiceSpec extends HmrcSpec with PushPullNotificationConnectorMockModu
       GetBoxId.verifyCalledWith(boxName, clientId)
     }
   }
+
+  "validateBoxOwnership" should {
+    "return true if the box is valid" in new Setup {
+      val boxId = BoxId.random
+      ValidateBoxOwnership.returns(true)
+
+      val result = await(underTest.validateBoxOwnership(boxId, clientId))
+
+      result shouldBe true
+      ValidateBoxOwnership.verifyCalledWith(boxId, clientId)
+    }
+  }
 }

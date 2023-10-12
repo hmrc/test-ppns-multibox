@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.testppnsmultibox.ppns.connectors
 
-import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
+import play.api.Logging
+import play.api.http.HeaderNames.ACCEPT
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
@@ -30,36 +31,70 @@ object PushPullNotificationConnector {
   case class Config(baseUrl: String)
 }
 
-case class GetBoxResponse(boxId: UUID)
+case class GetBoxResponse(boxId: BoxId)
 
 object GetBoxResponse {
   implicit val format: OFormat[GetBoxResponse] = Json.format[GetBoxResponse]
 }
 
-case class PostNotificationsRequest(correlationId: UUID, message: String)
+case class ValidateBoxOwnershipRequest(boxId: BoxId, clientId: String)
+
+object ValidateBoxOwnershipRequest {
+  implicit val format = Json.format[ValidateBoxOwnershipRequest]
+}
+
+case class ValidateBoxOwnershipResponse(valid: Boolean)
+
+object ValidateBoxOwnershipResponse {
+  implicit val format = Json.format[ValidateBoxOwnershipResponse]
+}
+
+case class PostNotificationsRequest(correlationId: CorrelationId, message: String)
 
 object PostNotificationsRequest {
   implicit val format: OFormat[PostNotificationsRequest] = Json.format[PostNotificationsRequest]
 }
 
-case class PostNotificationsResponse(notificationId: UUID)
+case class PostNotificationsResponse(notificationId: NotificationId)
 
 object PostNotificationsResponse {
   implicit val format: OFormat[PostNotificationsResponse] = Json.format[PostNotificationsResponse]
 }
 
 @Singleton
-class PushPullNotificationConnector @Inject() (config: PushPullNotificationConnector.Config, http: HttpClient)(implicit executionContext: ExecutionContext) {
+class PushPullNotificationConnector @Inject() (config: PushPullNotificationConnector.Config, http: HttpClient)(implicit executionContext: ExecutionContext)
+    extends Logging {
 
-  def getBoxId(boxName: String, clientId: String)(implicit hc: HeaderCarrier): Future[Option[BoxId]] = {
-    http.GET[GetBoxResponse](s"${config.baseUrl}/box", Seq("boxName" -> boxName, "clientId" -> clientId))
-      .map(x => Some(BoxId(x.boxId)))
-      .recover { case _ => None }
-  }
+  def getBoxId(boxName: String, clientId: String)(implicit hc: HeaderCarrier): Future[Option[BoxId]] =
+    http.GET[GetBoxResponse](
+      url = s"${config.baseUrl}/box",
+      queryParams = Seq("boxName" -> boxName, "clientId" -> clientId)
+    )
+      .map(x => Some(x.boxId))
+      .recover {
+        case e =>
+          logger.error(s"Error while getting box ID: ${e.getMessage}")
+          None
+      }
 
-  def postNotifications(boxId: BoxId, correlationId: CorrelationId, message: String)(implicit hc: HeaderCarrier): Future[NotificationId] = {
-    val body = PostNotificationsRequest(correlationId.value, message)
-    http.POST[PostNotificationsRequest, PostNotificationsResponse](s"${config.baseUrl}/box/${boxId.value}/notifications", body)
-      .map(x => NotificationId(x.notificationId))
-  }
+  def validateBoxOwnership(boxId: BoxId, clientId: String)(implicit hc: HeaderCarrier): Future[Boolean] =
+    http.POST[ValidateBoxOwnershipRequest, ValidateBoxOwnershipResponse](
+      url = s"${config.baseUrl}/cmb/validate",
+      body = ValidateBoxOwnershipRequest(boxId, clientId),
+      headers = Seq(ACCEPT -> "application/vnd.hmrc.1.0+json")
+    )
+      .map(_.valid)
+      .recover {
+        case e =>
+          logger.error(s"Error while validating box ID: ${e.getMessage}")
+          false
+      }
+
+  def postNotifications(boxId: BoxId, correlationId: CorrelationId, message: String)(implicit hc: HeaderCarrier): Future[NotificationId] =
+    http.POST[PostNotificationsRequest, PostNotificationsResponse](
+      url = s"${config.baseUrl}/box/${boxId.value}/notifications",
+      body = PostNotificationsRequest(correlationId, message)
+    )
+      .map(_.notificationId)
+
 }

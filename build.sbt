@@ -36,3 +36,9 @@ lazy val microservice = Project(appName, file("."))
       "-Wconf:cat=unused&src=.*ReverseRoutes\\.scala:s"
     )
   )
+  .settings(
+    routesImport ++= Seq(
+      "uk.gov.hmrc.testppnsmultibox.controllers.Binders._",
+      "uk.gov.hmrc.testppnsmultibox.ppns.models._"
+    )
+  )

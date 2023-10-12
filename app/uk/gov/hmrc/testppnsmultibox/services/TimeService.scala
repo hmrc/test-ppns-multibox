@@ -41,7 +41,7 @@ class TimeService @Inject() (
   )(implicit ec: ExecutionContext
   ) {
 
-  def notifyMeAfter(delay: FiniteDuration, boxId: BoxId)(implicit hc: HeaderCarrier): CorrelationId = {
+  def notify(boxId: BoxId, delay: FiniteDuration)(implicit hc: HeaderCarrier): CorrelationId = {
     val correlationId = uuidService.correlationId
     val notifyAt      = clock.instant.plusMillis(delay.toMillis)
     timedNotificationRepository.insert(TimedNotification(boxId, correlationId, notifyAt, notifyAt.plus(1, HOURS)))

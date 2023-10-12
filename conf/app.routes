@@ -1,4 +1,5 @@
 # microservice specific routes
 
-GET        /current-time             uk.gov.hmrc.testppnsmultibox.controllers.TimeController.currentTime()
-GET        /notify-me-in/:seconds    uk.gov.hmrc.testppnsmultibox.controllers.TimeController.notifyMeIn(seconds: Int)
+GET        /current-time                        uk.gov.hmrc.testppnsmultibox.controllers.TimeController.currentTime()
+GET        /notify-me-in/:seconds               uk.gov.hmrc.testppnsmultibox.controllers.TimeController.notifyMeIn(seconds: Int)
+GET        /notify-me-at/:boxId/:seconds        uk.gov.hmrc.testppnsmultibox.controllers.TimeController.notifyMeAt(boxId: uk.gov.hmrc.testppnsmultibox.ppns.models.BoxId, seconds: Int)

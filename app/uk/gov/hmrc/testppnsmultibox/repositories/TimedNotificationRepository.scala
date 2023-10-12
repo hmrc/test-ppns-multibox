@@ -73,10 +73,4 @@ class TimedNotificationRepository @Inject() (mongo: MongoComponent)(implicit val
       options = FindOneAndUpdateOptions().upsert(true).returnDocument(ReturnDocument.AFTER)
     ).headOption()
   }
-
-  def fetchByCorrelationId(correlationId: CorrelationId): Future[List[TimedNotification]] = {
-    collection.find(equal("correlationId", Codecs.toBson(correlationId.value)))
-      .toFuture()
-      .map(_.toList)
-  }
 }

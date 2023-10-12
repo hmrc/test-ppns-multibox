@@ -31,4 +31,8 @@ class BoxService @Inject() (appConfig: AppConfig, pushPullNotificationConnector:
   def getBoxId(clientId: String)(implicit hc: HeaderCarrier): Future[Option[BoxId]] = {
     pushPullNotificationConnector.getBoxId(s"${appConfig.apiContext}##${appConfig.apiVersion}##callbackUrl", clientId)
   }
+
+  def validateBoxOwnership(boxId: BoxId, clientId: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
+    pushPullNotificationConnector.validateBoxOwnership(boxId, clientId)
+  }
 }

@@ -27,9 +27,9 @@ trait TimeServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
 
   val mockTimeService = mock[TimeService]
 
-  object NotifyMeIn {
+  object Notify {
 
     def returns(correlationId: CorrelationId) =
-      when(mockTimeService.notifyMeAfter(*[FiniteDuration], *[BoxId])(*)).thenReturn(correlationId)
+      when(mockTimeService.notify(*[BoxId], *[FiniteDuration])(*)).thenReturn(correlationId)
   }
 }
