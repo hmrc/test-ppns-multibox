@@ -16,19 +16,18 @@
 
 package uk.gov.hmrc.testppnsmultibox.stubs
 
+import java.util.UUID
+
 import com.github.tomakehurst.wiremock.client.WireMock._
+
 import play.api.libs.json.Json
 import play.api.test.Helpers._
 
-import uk.gov.hmrc.testppnsmultibox.ppns.models.BoxId
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, NotificationId}
 
 trait PushPullNotificationConnectorStub {
 
-  val boxName = "box-name"
-  val clientId = "client-id"
-  val boxId = BoxId.random
-
-  def getBoxStubReturns(response: String): Any =
+  def getBoxStubSucceeds(boxName: String, clientId: String, boxId: BoxId): Any =
     stubFor(
       get(urlPathEqualTo("/box"))
         .withQueryParam("boxName", equalTo(boxName))
@@ -36,23 +35,41 @@ trait PushPullNotificationConnectorStub {
         .willReturn(
           aResponse()
             .withStatus(OK)
-            .withBody(response)
+            .withBody(Json.obj(
+              "boxId"         -> boxId.value,
+              "boxName"       -> boxName,
+              "boxCreator"    -> Json.obj("clientId" -> clientId),
+              "applicationId" -> UUID.randomUUID().toString,
+              "clientManaged" -> false
+            ).toString)
         )
     )
 
-  def validateBoxOwnershipStubReturns(response: String): Any =
+  def getBoxStubNotFound(boxName: String, clientId: String): Any =
+    stubFor(
+      get(urlPathEqualTo("/box"))
+        .withQueryParam("boxName", equalTo(boxName))
+        .withQueryParam("clientId", equalTo(clientId))
+        .willReturn(
+          aResponse()
+            .withStatus(NOT_FOUND)
+            .withBody(Json.obj("code" -> "BOX_NOT_FOUND", "message" -> "Box not found").toString)
+        )
+    )
+
+  def validateBoxOwnershipStubReturns(boxId: BoxId, clientId: String, valid: Boolean): Any =
     stubFor(
       post(urlPathEqualTo("/cmb/validate"))
         .withHeader(ACCEPT, equalTo("application/vnd.hmrc.1.0+json"))
-        .withRequestBody(equalToJson(Json.obj("boxId" -> boxId.value.toString, "clientId" -> clientId).toString))
+        .withRequestBody(equalToJson(Json.obj("boxId" -> boxId, "clientId" -> clientId).toString))
         .willReturn(
           aResponse()
             .withStatus(OK)
-            .withBody(response)
+            .withBody(Json.obj("valid" -> valid).toString)
         )
     )
 
-  def validateBoxOwnershipStubThrowsException(): Any =
+  def validateBoxOwnershipStubThrowsException(boxId: BoxId, clientId: String): Any =
     stubFor(
       post(urlPathEqualTo("/cmb/validate"))
         .withRequestBody(equalToJson(Json.obj("boxId" -> boxId.value.toString, "clientId" -> clientId).toString))
@@ -63,9 +80,9 @@ trait PushPullNotificationConnectorStub {
         )
     )
 
-  def postNotificationsStubForBoxIdReturns(boxId: String)(notificationId: String): Any =
+  def postNotificationsStubForBoxIdReturns(boxId: BoxId, notificationId: NotificationId): Any =
     stubFor(
-      post(urlPathEqualTo(s"/box/$boxId/notifications"))
+      post(urlPathEqualTo(s"/box/${boxId.value}/notifications"))
         .willReturn(
           aResponse()
             .withStatus(OK)

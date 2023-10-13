@@ -25,7 +25,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.WireMockSupport
 
-import uk.gov.hmrc.testppnsmultibox.ppns.models.{CorrelationId, NotificationId}
+import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId, NotificationId}
 import uk.gov.hmrc.testppnsmultibox.stubs.PushPullNotificationConnectorStub
 
 class PushPullNotificationConnectorISpec extends AsyncHmrcSpec with WireMockSupport with GuiceOneAppPerSuite with PushPullNotificationConnectorStub {
@@ -46,6 +46,9 @@ class PushPullNotificationConnectorISpec extends AsyncHmrcSpec with WireMockSupp
 
     val underTest = app.injector.instanceOf[PushPullNotificationConnector]
 
+    val boxName        = "box-name"
+    val clientId       = "client-id"
+    val boxId          = BoxId.random
     val correlationId  = CorrelationId.random
     val notificationId = NotificationId.random
   }
@@ -53,17 +56,7 @@ class PushPullNotificationConnectorISpec extends AsyncHmrcSpec with WireMockSupp
   "getBoxId" should {
 
     "return a box ID if successful" in new Setup {
-      getBoxStubReturns(
-        s"""{
-           |    "boxId": "${boxId.value}",
-           |    "boxName": "$boxName",
-           |    "boxCreator": {
-           |        "clientId": "$clientId"
-           |    },
-           |    "applicationId": "f255573c-445f-43cc-86f3-0d76122ed7b5",
-           |    "clientManaged": false
-           |}""".stripMargin.stripLineEnd
-      )
+      getBoxStubSucceeds(boxName, clientId, boxId)
 
       val result = await(underTest.getBoxId(boxName, clientId))
 
@@ -71,12 +64,7 @@ class PushPullNotificationConnectorISpec extends AsyncHmrcSpec with WireMockSupp
     }
 
     "return None if unsuccessful" in new Setup {
-      getBoxStubReturns(
-        """{
-          |    "code": "BOX_NOT_FOUND",
-          |    "message": "Box not found"
-          |}""".stripMargin.stripLineEnd
-      )
+      getBoxStubNotFound(boxName, clientId)
 
       val result = await(underTest.getBoxId(boxName, clientId))
 
@@ -87,19 +75,16 @@ class PushPullNotificationConnectorISpec extends AsyncHmrcSpec with WireMockSupp
   "validateBoxOwnership" should {
 
     "return true if the box is valid" in new Setup {
-      validateBoxOwnershipStubReturns(
-        s"""{
-           |    "valid": true
-           |}""".stripMargin.stripLineEnd
-      )
+      val validity = true
+      validateBoxOwnershipStubReturns(boxId, clientId, validity)
 
       val result = await(underTest.validateBoxOwnership(boxId, clientId))
 
-      result mustBe true
+      result mustBe validity
     }
 
     "return false if the box is not found" in new Setup {
-      validateBoxOwnershipStubThrowsException()
+      validateBoxOwnershipStubThrowsException(boxId, clientId)
 
       val result = await(underTest.validateBoxOwnership(boxId, clientId))
 
@@ -110,7 +95,7 @@ class PushPullNotificationConnectorISpec extends AsyncHmrcSpec with WireMockSupp
   "postNotifications" should {
 
     "return a notification ID if successful" in new Setup {
-      postNotificationsStubForBoxIdReturns(boxId.value.toString)(notificationId.value.toString)
+      postNotificationsStubForBoxIdReturns(boxId, notificationId)
 
       val result = await(underTest.postNotifications(boxId, correlationId, "message"))
 
