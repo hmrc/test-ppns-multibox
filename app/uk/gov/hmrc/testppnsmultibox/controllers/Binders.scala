@@ -17,7 +17,7 @@
 package uk.gov.hmrc.testppnsmultibox.controllers
 
 import java.util.UUID
-import scala.util.Try
+import scala.util.control.Exception.allCatch
 
 import play.api.Logger
 import play.api.mvc.PathBindable
@@ -28,13 +28,11 @@ object Binders {
   val logger = Logger("binders")
 
   private def boxIdFromString(text: String): Either[String, BoxId] = {
-    Try(UUID.fromString(text))
-      .toOption
+    allCatch.opt(BoxId(UUID.fromString(text)))
       .toRight({
         logger.info("Cannot parse parameter %s as BoxId".format(text))
         "Box ID is not a UUID"
       })
-      .map(BoxId(_))
   }
 
   implicit def boxIdPathBindable(implicit textBinder: PathBindable[String]): PathBindable[BoxId] = new PathBindable[BoxId] {
