@@ -19,7 +19,6 @@ package uk.gov.hmrc.testppnsmultibox
 import scala.util.control.NonFatal
 
 import play.api.Logger
-import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import uk.gov.hmrc.auth.core.UnsupportedAuthProvider
@@ -33,10 +32,10 @@ package object controllers {
     case _: UnsupportedAuthProvider =>
       val message = "Only standard applications may call this endpoint"
       logger.error(message)
-      Unauthorized(Json.toJson(ErrorResponse(message)))
+      Unauthorized(ErrorResponse("UNAUTHORIZED", message).asJson)
     case NonFatal(e)                =>
       val message = s"An unexpected error occurred: ${e.getMessage}"
       logger.error(message)
-      InternalServerError(Json.toJson(ErrorResponse(message)))
+      InternalServerError(ErrorResponse("INTERNAL_SERVER_ERROR", message).asJson)
   }
 }

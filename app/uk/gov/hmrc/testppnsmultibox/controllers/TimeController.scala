@@ -21,7 +21,6 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 
-import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.auth.core.AuthProvider.StandardApplication
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals._
@@ -39,19 +38,19 @@ class TimeController @Inject() (val authConnector: AuthConnector, boxService: Bo
     extends BackendController(cc) with AuthorisedFunctions {
 
   def currentTime(): Action[AnyContent] = Action.async { _ =>
-    Future.successful(Ok(Json.toJson(TimeResponse(Instant.now()))))
+    Future.successful(Ok(TimeResponse(Instant.now()).asJson))
   }
 
   def notifyMeIn(seconds: Int): Action[AnyContent] = Action.async { implicit request =>
     authorised(AuthProviders(StandardApplication)).retrieve(clientId) {
       case Some(clientId) =>
         boxService.getBoxId(clientId).map {
-          case None        => BadRequest(Json.toJson(ErrorResponse(s"A notification box was not found for client ID $clientId")))
+          case None        => BadRequest(ErrorResponse("BAD_REQUEST", s"A notification box was not found for client ID $clientId").asJson)
           case Some(boxId) =>
             val correlationId = timeService.notify(boxId, seconds.seconds)
-            Accepted(Json.toJson(NotificationResponse(boxId, correlationId)))
+            Accepted(NotificationResponse(boxId, correlationId).asJson)
         }
-      case None           => Future.successful(Unauthorized(Json.toJson(ErrorResponse("A client ID could not be retrieved after endpoint authorisation"))))
+      case None           => Future.successful(Unauthorized(ErrorResponse("UNAUTHORIZED", "A client ID could not be retrieved after endpoint authorisation").asJson))
     } recover recovery
   }
 
@@ -59,12 +58,12 @@ class TimeController @Inject() (val authConnector: AuthConnector, boxService: Bo
     authorised(AuthProviders(StandardApplication)).retrieve(clientId) {
       case Some(clientId) =>
         boxService.validateBoxOwnership(boxId, clientId).map {
-          case false => BadRequest(Json.toJson(ErrorResponse(s"The provided box is not owned by client ID $clientId")))
+          case false => BadRequest(ErrorResponse("BAD_REQUEST", s"The provided box is not owned by client ID $clientId").asJson)
           case true  =>
             val correlationId = timeService.notify(boxId, seconds.seconds)
-            Accepted(Json.toJson(NotificationResponse(boxId, correlationId)))
+            Accepted(NotificationResponse(boxId, correlationId).asJson)
         }
-      case None           => Future.successful(Unauthorized(Json.toJson(ErrorResponse("A client ID could not be retrieved after endpoint authorisation"))))
+      case None           => Future.successful(Unauthorized(ErrorResponse("UNAUTHORIZED", "A client ID could not be retrieved after endpoint authorisation").asJson))
     } recover recovery
   }
 }

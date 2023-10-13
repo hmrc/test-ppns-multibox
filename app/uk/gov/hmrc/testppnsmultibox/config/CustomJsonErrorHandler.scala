@@ -21,7 +21,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 import play.api.Configuration
 import play.api.http.Status.BAD_REQUEST
-import play.api.libs.json.Json
 import play.api.mvc.Results.BadRequest
 import play.api.mvc.{RequestHeader, Result}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -47,7 +46,7 @@ class CustomJsonErrorHandler @Inject() (auditConnector: AuditConnector, httpAudi
             detail = Map.empty
           )
         )
-        Future.successful(BadRequest(Json.toJson(ErrorResponse(message))))
+        Future.successful(BadRequest(ErrorResponse("BAD_REQUEST", message).asJson))
       case _                                                =>
         // Use the default for other cases
         super.onClientError(request, statusCode, message)

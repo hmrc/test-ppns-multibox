@@ -87,7 +87,7 @@ class TimeControllerISpec extends AsyncHmrcSpec with WireMockSupport with GuiceO
       val result = route(app, FakeRequest("GET", s"/notify-me-at/malformed-box-id/in/10").withHeaders(AUTHORIZATION -> "Bearer token")).get
 
       status(result) mustBe BAD_REQUEST
-      contentAsJson(result).as[ErrorResponse] mustBe ErrorResponse("Box ID is not a UUID")
+      contentAsJson(result) mustBe ErrorResponse("BAD_REQUEST", "Box ID is not a UUID").asJson
     }
   }
 }
