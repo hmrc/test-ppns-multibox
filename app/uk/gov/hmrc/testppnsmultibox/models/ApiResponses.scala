@@ -22,19 +22,25 @@ import play.api.libs.json.Json
 
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
 
-case class TimeResponse(message: Instant)
+case class TimeResponse(message: Instant) {
+  def asJson = TimeResponse.format.writes(this)
+}
 
 object TimeResponse {
   implicit val format = Json.format[TimeResponse]
 }
 
-case class NotificationResponse(boxId: BoxId, correlationId: CorrelationId)
+case class NotificationResponse(boxId: BoxId, correlationId: CorrelationId) {
+  def asJson = NotificationResponse.format.writes(this)
+}
 
 object NotificationResponse {
   implicit val format = Json.format[NotificationResponse]
 }
 
-case class ErrorResponse(message: String)
+case class ErrorResponse(code: String, message: String) {
+  def asJson = ErrorResponse.format.writes(this)
+}
 
 object ErrorResponse {
   implicit val format = Json.format[ErrorResponse]

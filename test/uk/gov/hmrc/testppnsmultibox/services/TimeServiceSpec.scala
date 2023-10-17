@@ -43,7 +43,7 @@ class TimeServiceSpec extends HmrcSpec with UuidServiceMockModule with TimedNoti
     val underTest   = new TimeService(mockUuidService, mockTimedNotificationRepository, mockPushPullNotificationConnector, system, clock)
   }
 
-  "notifyMeIn" should {
+  "notify" should {
     "return a correlation ID and perform an asynchronous action" in new Setup {
       CorrelationIdGenerator.returnsFakeCorrelationId
 
@@ -56,7 +56,7 @@ class TimeServiceSpec extends HmrcSpec with UuidServiceMockModule with TimedNoti
       val notificationId = NotificationId.random
       PostNotifications.returns(notificationId)
 
-      val correlationId = underTest.notifyMeAfter(delay, boxId)
+      val correlationId = underTest.notify(boxId, delay)
 
       correlationId shouldBe fakeCorrelationId
       Insert.verifyCalledWith(timedNotification)

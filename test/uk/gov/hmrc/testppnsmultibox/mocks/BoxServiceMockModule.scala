@@ -38,4 +38,13 @@ trait BoxServiceMockModule extends MockitoSugar with ArgumentMatchersSugar {
     def verifyCalledWith(clientId: String) =
       verify(mockBoxService).getBoxId(eqTo(clientId))(*)
   }
+
+  object ValidateBoxOwnership {
+
+    def returns(valid: Boolean) =
+      when(mockBoxService.validateBoxOwnership(*[BoxId], *)(*)).thenReturn(Future.successful(valid))
+
+    def verifyCalledWith(boxId: BoxId, clientId: String) =
+      verify(mockBoxService).validateBoxOwnership(eqTo(boxId), eqTo(clientId))(*)
+  }
 }

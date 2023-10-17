@@ -39,6 +39,15 @@ trait PushPullNotificationConnectorMockModule extends MockitoSugar with Argument
       verify(mockPushPullNotificationConnector).getBoxId(eqTo(boxName), eqTo(clientId))(*)
   }
 
+  object ValidateBoxOwnership {
+
+    def returns(valid: Boolean) =
+      when(mockPushPullNotificationConnector.validateBoxOwnership(*[BoxId], *)(*)).thenReturn(successful(valid))
+
+    def verifyCalledWith(boxId: BoxId, clientId: String) =
+      verify(mockPushPullNotificationConnector).validateBoxOwnership(eqTo(boxId), eqTo(clientId))(*)
+  }
+
   object PostNotifications {
 
     def returns(notificationId: NotificationId) =

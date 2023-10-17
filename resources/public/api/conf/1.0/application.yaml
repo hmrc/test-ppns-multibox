@@ -16,7 +16,7 @@ servers:
 tags:
 - name: test-ppns-multibox
   description: 'Test PPNS Multibox Tag'
-  
+
 components:
   parameters:
     acceptHeader:
@@ -38,7 +38,7 @@ components:
       flows:
         clientCredentials:
           tokenUrl: https://api.service.hmrc.gov.uk/oauth/token
-          scopes: { }
+          scopes: {}
   schemas:
     TimeResponse:
       title: Current Time Response
@@ -53,8 +53,8 @@ components:
     NotificationResponse:
       title: Notification Response
       required:
-        - boxId
-        - correlationId
+      - boxId
+      - correlationId
       type: object
       properties:
         boxId:
@@ -89,18 +89,18 @@ paths:
   /notify-me-in/{seconds}:
     get:
       tags:
-        - test-ppns-multibox
+      - test-ppns-multibox
       summary: Take seconds to return the current time
       description: >
         An endpoint that takes the requested number of seconds to return the current server time.
       parameters:
-        - $ref: '#/components/parameters/acceptHeader'
-        - in: path
-          name: seconds
-          schema:
-            type: integer
-          required: true
-          description: Number of seconds to notification
+      - $ref: '#/components/parameters/acceptHeader'
+      - in: path
+        name: seconds
+        schema:
+          type: integer
+        required: true
+        description: Number of seconds to notification
       responses:
         '202':
           description: 'ACCEPTED Response'
@@ -108,6 +108,39 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/NotificationResponse'
+                - $ref: '#/components/schemas/NotificationResponse'
+      security:
+      - applicationRestricted: []
+  
+  /notify-me-at/{boxId}/{seconds}:
+    get:
+      tags:
+      - test-ppns-multibox
+      summary: Take seconds to return the current time to the provided box
+      description: >
+        An endpoint that takes a box ID and the requested number of seconds to return the current server time.
+      parameters:
+      - $ref: '#/components/parameters/acceptHeader'
+      - in: path
+        name: boxId
+        schema:
+          type: string
+        required: true
+        description: The ID of a client-managed notification box
+        example: f9e722a8-200c-4572-8680-aa3f103ea1a5
+      - in: path
+        name: seconds
+        schema:
+          type: integer
+        required: true
+        description: Number of seconds to notification
+      responses:
+        '202':
+          description: 'ACCEPTED Response'
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/NotificationResponse'
       security:
       - applicationRestricted: []

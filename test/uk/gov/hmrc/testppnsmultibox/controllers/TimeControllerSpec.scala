@@ -22,7 +22,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import utils.HmrcSpec
 
 import play.api.http.Status
-import play.api.libs.json.Json
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -39,8 +38,9 @@ class TimeControllerSpec extends HmrcSpec with AuthConnectorMockModule with BoxS
 
     val underTest = new TimeController(mockAuthConnector, mockBoxService, mockTimeService)(Helpers.stubControllerComponents())
 
-    val seconds  = 1
-    val clientId = UUID.randomUUID().toString
+    val fakeBoxId = BoxId.random
+    val seconds   = 1
+    val clientId  = UUID.randomUUID().toString
   }
 
   "currentTime" should {
@@ -55,16 +55,15 @@ class TimeControllerSpec extends HmrcSpec with AuthConnectorMockModule with BoxS
 
   "notifyMeIn" should {
     "return 202 and a NotificationResponse body" in new Setup {
-      val fakeBoxId         = BoxId.random
       val fakeCorrelationId = CorrelationId.random
       Authorise.asStandardApplication(clientId)
       GetBoxId.returns(fakeBoxId)
-      NotifyMeIn.returns(fakeCorrelationId)
+      Notify.returns(fakeCorrelationId)
 
       val result = underTest.notifyMeIn(seconds)(fakeRequest)
 
       status(result) shouldBe Status.ACCEPTED
-      contentAsJson(result) shouldBe Json.toJson(NotificationResponse(fakeBoxId, fakeCorrelationId))
+      contentAsJson(result) shouldBe NotificationResponse(fakeBoxId, fakeCorrelationId).asJson
 
       GetBoxId.verifyCalledWith(clientId)
     }
@@ -75,7 +74,7 @@ class TimeControllerSpec extends HmrcSpec with AuthConnectorMockModule with BoxS
       val result = underTest.notifyMeIn(seconds)(fakeRequest)
 
       status(result) shouldBe Status.UNAUTHORIZED
-      contentAsJson(result) shouldBe Json.toJson(ErrorResponse("Only standard applications may call this endpoint"))
+      contentAsJson(result) shouldBe ErrorResponse("UNAUTHORIZED", "Only standard applications may call this endpoint").asJson
     }
 
     "return 401 if a client ID cannot be retrieved" in new Setup {
@@ -84,7 +83,7 @@ class TimeControllerSpec extends HmrcSpec with AuthConnectorMockModule with BoxS
       val result = underTest.notifyMeIn(seconds)(fakeRequest)
 
       status(result) shouldBe Status.UNAUTHORIZED
-      contentAsJson(result) shouldBe Json.toJson(ErrorResponse("A client ID could not be retrieved after endpoint authorisation"))
+      contentAsJson(result) shouldBe ErrorResponse("UNAUTHORIZED", "A client ID could not be retrieved after endpoint authorisation").asJson
     }
 
     "return 400 if a box ID cannot fetched" in new Setup {
@@ -94,7 +93,7 @@ class TimeControllerSpec extends HmrcSpec with AuthConnectorMockModule with BoxS
       val result = underTest.notifyMeIn(seconds)(fakeRequest)
 
       status(result) shouldBe Status.BAD_REQUEST
-      contentAsJson(result) shouldBe Json.toJson(ErrorResponse(s"A notification box was not found for client ID $clientId"))
+      contentAsJson(result) shouldBe ErrorResponse("BAD_REQUEST", s"A notification box was not found for client ID $clientId").asJson
     }
 
     "return 500 if there is an unexpected error" in new Setup {
@@ -103,7 +102,60 @@ class TimeControllerSpec extends HmrcSpec with AuthConnectorMockModule with BoxS
       val result = underTest.notifyMeIn(seconds)(fakeRequest)
 
       status(result) shouldBe Status.INTERNAL_SERVER_ERROR
-      contentAsJson(result) shouldBe Json.toJson(ErrorResponse("An unexpected error occurred: Internal error"))
+      contentAsJson(result) shouldBe ErrorResponse("INTERNAL_SERVER_ERROR", "An unexpected error occurred: Internal error").asJson
+    }
+  }
+
+  "notifyMeAt" should {
+    "return 202 and a NotificationResponse body" in new Setup {
+      val fakeCorrelationId = CorrelationId.random
+      Authorise.asStandardApplication(clientId)
+      ValidateBoxOwnership.returns(true)
+      Notify.returns(fakeCorrelationId)
+
+      val result = underTest.notifyMeAt(fakeBoxId, seconds)(fakeRequest)
+
+      status(result) shouldBe Status.ACCEPTED
+      contentAsJson(result) shouldBe NotificationResponse(fakeBoxId, fakeCorrelationId).asJson
+
+      ValidateBoxOwnership.verifyCalledWith(fakeBoxId, clientId)
+    }
+
+    "return 401 if not authorised by a standard app" in new Setup {
+      Authorise.asUnsupportedAuthProvider()
+
+      val result = underTest.notifyMeAt(fakeBoxId, seconds)(fakeRequest)
+
+      status(result) shouldBe Status.UNAUTHORIZED
+      contentAsJson(result) shouldBe ErrorResponse("UNAUTHORIZED", "Only standard applications may call this endpoint").asJson
+    }
+
+    "return 401 if a client ID cannot be retrieved" in new Setup {
+      Authorise.withoutClientId()
+
+      val result = underTest.notifyMeAt(fakeBoxId, seconds)(fakeRequest)
+
+      status(result) shouldBe Status.UNAUTHORIZED
+      contentAsJson(result) shouldBe ErrorResponse("UNAUTHORIZED", "A client ID could not be retrieved after endpoint authorisation").asJson
+    }
+
+    "return 400 if the box ID is not valid" in new Setup {
+      Authorise.asStandardApplication(clientId)
+      ValidateBoxOwnership.returns(false)
+
+      val result = underTest.notifyMeAt(fakeBoxId, seconds)(fakeRequest)
+
+      status(result) shouldBe Status.BAD_REQUEST
+      contentAsJson(result) shouldBe ErrorResponse("BAD_REQUEST", s"The provided box is not owned by client ID $clientId").asJson
+    }
+
+    "return 500 if there is an unexpected error" in new Setup {
+      Authorise.withInternalError()
+
+      val result = underTest.notifyMeAt(fakeBoxId, seconds)(fakeRequest)
+
+      status(result) shouldBe Status.INTERNAL_SERVER_ERROR
+      contentAsJson(result) shouldBe ErrorResponse("INTERNAL_SERVER_ERROR", "An unexpected error occurred: Internal error").asJson
     }
   }
 }
