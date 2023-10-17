@@ -112,7 +112,7 @@ paths:
       security:
       - applicationRestricted: []
   
-  /notify-me-at/{boxId}/{seconds}:
+  /notify-me-at/{boxId}/in/{seconds}:
     get:
       tags:
       - test-ppns-multibox
