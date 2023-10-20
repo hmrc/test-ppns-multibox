@@ -40,7 +40,18 @@ components:
           tokenUrl: https://api.service.hmrc.gov.uk/oauth/token
           scopes: {}
   schemas:
-    TimeResponse:
+    errorResponse:
+      title: Error Response
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    timeResponse:
       title: Current Time Response
       required:
       - message
@@ -50,7 +61,7 @@ components:
           type: string
       example:
         message: 2023-02-27T16:54:23.933430Z
-    NotificationResponse:
+    notificationResponse:
       title: Notification Response
       required:
       - boxId
@@ -64,6 +75,17 @@ components:
       example:
         boxId: f9e722a8-200c-4572-8680-aa3f103ea1a5
         correlationId: 2bb5b059-73db-4445-a7ae-4e4c471866dd
+  examples:
+    standardAppsOnlyError:
+      summary: Standard apps only
+      value:
+        code: UNAUTHORIZED
+        message: Only standard applications may call this endpoint
+    clientIdRetrievalError:
+      summary: Client ID retrieval
+      value:
+        code: UNAUTHORIZED
+        message: A client ID could not be retrieved after endpoint authorisation
 
 paths:
   /current-time:
@@ -82,7 +104,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/TimeResponse'
+                - $ref: '#/components/schemas/timeResponse'
       security:
       - {}
 
@@ -108,7 +130,27 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/NotificationResponse'
+                - $ref: '#/components/schemas/notificationResponse'
+        '400':
+          description: The default notification box is missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              example:
+                code: BAD_REQUEST
+                message: A notification box was not found for client ID {clientId}
+        '401':
+          description: The application is not authorised to call this endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              examples:
+                standardAppsOnly:
+                  $ref: '#/components/examples/standardAppsOnlyError'
+                clientIdRetrieval:
+                  $ref: '#/components/examples/clientIdRetrievalError'
       security:
       - applicationRestricted: []
   
@@ -141,6 +183,34 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/NotificationResponse'
+                - $ref: '#/components/schemas/notificationResponse'
+        '400':
+          description: Bad notification box
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              examples:
+                notAUuid:
+                  summary: Not a UUID
+                  value:
+                    code: BAD_REQUEST
+                    message: Box ID is not a UUID
+                notOwned:
+                  summary: Not owned
+                  value:
+                    code: BAD_REQUEST
+                    message: The provided box is not owned by client ID {clientId}
+        '401':
+          description: The application is not authorised to call this endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              examples:
+                standardAppsOnly:
+                  $ref: '#/components/examples/standardAppsOnlyError'
+                clientIdRetrieval:
+                  $ref: '#/components/examples/clientIdRetrievalError'
       security:
       - applicationRestricted: []
