@@ -1,14 +1,16 @@
 import uk.gov.hmrc.DefaultBuildSettings._
 
 val appName = "test-ppns-multibox"
-scalaVersion := "2.13.8"
 
-ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
+scalaVersion := "2.13.12"
+
+ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(PlayScala, SbtDistributablesPlugin)
+  .disablePlugins(JUnitXmlReportPlugin)
   .settings(
     majorVersion        := 0,
     targetJvm           := "jvm-11",
@@ -26,7 +28,7 @@ lazy val microservice = Project(appName, file("."))
     IntegrationTest / unmanagedSourceDirectories += baseDirectory.value / "testcommon"
   )
   .settings(resolvers += Resolver.jcenterRepo)
-  .settings(inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest)))
+  .settings(scalafixConfigSettings(IntegrationTest))
   .settings(CodeCoverageSettings.settings: _*)
   .settings(
     scalacOptions ++= Seq(
@@ -42,3 +44,12 @@ lazy val microservice = Project(appName, file("."))
       "uk.gov.hmrc.testppnsmultibox.ppns.models._"
     )
   )
+
+commands ++= Seq(
+  Command.command("run-all-tests") { state => "test" :: "it:test" :: state },
+
+  Command.command("clean-and-test") { state => "clean" :: "compile" :: "run-all-tests" :: state },
+
+  // Coverage does not need compile !
+  Command.command("pre-commit") { state => "clean" :: "scalafmtAll" :: "scalafixAll" :: "coverage" :: "run-all-tests" :: "coverageOff" :: "coverageAggregate" :: state }
+)
