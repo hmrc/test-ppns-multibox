@@ -20,7 +20,7 @@ import java.time.temporal.ChronoUnit.HOURS
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import org.scalatest.BeforeAndAfterAll
 import utils.{FixedClock, HmrcSpec}
 
@@ -39,8 +39,8 @@ class TimeServiceSpec extends HmrcSpec with UuidServiceMockModule with TimedNoti
   override def afterAll(): Unit = await(system.terminate())
 
   trait Setup {
-    implicit val hc = HeaderCarrier()
-    val underTest   = new TimeService(mockUuidService, mockTimedNotificationRepository, mockPushPullNotificationConnector, system, clock)
+    implicit val hc: HeaderCarrier = HeaderCarrier()
+    val underTest                  = new TimeService(mockUuidService, mockTimedNotificationRepository, mockPushPullNotificationConnector, system, clock)
   }
 
   "notify" should {

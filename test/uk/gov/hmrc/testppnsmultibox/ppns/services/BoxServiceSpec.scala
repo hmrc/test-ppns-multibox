@@ -30,7 +30,7 @@ import uk.gov.hmrc.testppnsmultibox.ppns.models.BoxId
 class BoxServiceSpec extends HmrcSpec with PushPullNotificationConnectorMockModule with FutureAwaits with DefaultAwaitTimeout {
 
   trait Setup {
-    implicit val hc = HeaderCarrier()
+    implicit val hc: HeaderCarrier = HeaderCarrier()
 
     val mockAppConfig = mock[AppConfig]
     when(mockAppConfig.apiContext).thenReturn("test/ppns-multibox")

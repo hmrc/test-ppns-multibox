@@ -40,13 +40,13 @@ object GetBoxResponse {
 case class ValidateBoxOwnershipRequest(boxId: BoxId, clientId: String)
 
 object ValidateBoxOwnershipRequest {
-  implicit val format = Json.format[ValidateBoxOwnershipRequest]
+  implicit val format: OFormat[ValidateBoxOwnershipRequest] = Json.format[ValidateBoxOwnershipRequest]
 }
 
 case class ValidateBoxOwnershipResponse(valid: Boolean)
 
 object ValidateBoxOwnershipResponse {
-  implicit val format = Json.format[ValidateBoxOwnershipResponse]
+  implicit val format: OFormat[ValidateBoxOwnershipResponse] = Json.format[ValidateBoxOwnershipResponse]
 }
 
 case class PostNotificationsRequest(correlationId: CorrelationId, message: String)

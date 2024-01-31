@@ -33,8 +33,8 @@ import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
 class TimeControllerSpec extends HmrcSpec with AuthConnectorMockModule with BoxServiceMockModule with TimeServiceMockModule {
 
   trait Setup {
-    implicit val hc = HeaderCarrier()
-    val fakeRequest = FakeRequest()
+    implicit val hc: HeaderCarrier = HeaderCarrier()
+    val fakeRequest                = FakeRequest()
 
     val underTest = new TimeController(mockAuthConnector, mockBoxService, mockTimeService)(Helpers.stubControllerComponents())
 

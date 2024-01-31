@@ -18,7 +18,7 @@ package uk.gov.hmrc.testppnsmultibox.models
 
 import java.time.Instant
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Format, Json, OFormat}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId, NotificationId}
@@ -36,6 +36,6 @@ object TimedNotification {
 
   implicit val ordering: Ordering[TimedNotification] = Ordering.fromLessThan((a, b) => a.notifyAt isBefore b.notifyAt)
 
-  implicit val dateFormat = MongoJavatimeFormats.instantFormat
-  implicit val format     = Json.format[TimedNotification]
+  implicit val dateFormat: Format[Instant]        = MongoJavatimeFormats.instantFormat
+  implicit val format: OFormat[TimedNotification] = Json.format[TimedNotification]
 }

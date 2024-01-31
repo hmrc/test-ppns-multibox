@@ -18,30 +18,30 @@ package uk.gov.hmrc.testppnsmultibox.models
 
 import java.time.Instant
 
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json, OFormat}
 
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId}
 
 case class TimeResponse(message: Instant) {
-  def asJson = TimeResponse.format.writes(this)
+  def asJson: JsObject = TimeResponse.format.writes(this)
 }
 
 object TimeResponse {
-  implicit val format = Json.format[TimeResponse]
+  implicit val format: OFormat[TimeResponse] = Json.format[TimeResponse]
 }
 
 case class NotificationResponse(boxId: BoxId, correlationId: CorrelationId) {
-  def asJson = NotificationResponse.format.writes(this)
+  def asJson: JsObject = NotificationResponse.format.writes(this)
 }
 
 object NotificationResponse {
-  implicit val format = Json.format[NotificationResponse]
+  implicit val format: OFormat[NotificationResponse] = Json.format[NotificationResponse]
 }
 
 case class ErrorResponse(code: String, message: String) {
-  def asJson = ErrorResponse.format.writes(this)
+  def asJson: JsObject = ErrorResponse.format.writes(this)
 }
 
 object ErrorResponse {
-  implicit val format = Json.format[ErrorResponse]
+  implicit val format: OFormat[ErrorResponse] = Json.format[ErrorResponse]
 }
