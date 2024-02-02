@@ -22,7 +22,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 
 import uk.gov.hmrc.http.HeaderCarrier
 

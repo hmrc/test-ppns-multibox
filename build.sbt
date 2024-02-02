@@ -13,8 +13,7 @@ lazy val microservice = Project(appName, file("."))
   .disablePlugins(JUnitXmlReportPlugin)
   .settings(
     majorVersion        := 0,
-    targetJvm           := "jvm-11",
-    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
+    libraryDependencies ++= AppDependencies(),
   )
   .settings(
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
