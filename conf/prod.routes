@@ -1,4 +1,4 @@
 # Add all the application routes to the app.routes file
 ->         /                          app.Routes
-GET        /ping/ping                 uk.gov.hmrc.testppnsmultibox.controllers.DocumentationController.definition()
+->         /                          health.Routes
 ->         /                          definition.Routes
