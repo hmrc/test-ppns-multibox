@@ -23,7 +23,8 @@ import play.api.Logging
 import play.api.http.HeaderNames.ACCEPT
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 
 import uk.gov.hmrc.testppnsmultibox.ppns.models.{BoxId, CorrelationId, NotificationId}
 
@@ -62,14 +63,12 @@ object PostNotificationsResponse {
 }
 
 @Singleton
-class PushPullNotificationConnector @Inject() (config: PushPullNotificationConnector.Config, http: HttpClient)(implicit executionContext: ExecutionContext)
+class PushPullNotificationConnector @Inject() (config: PushPullNotificationConnector.Config, http: HttpClientV2)(implicit executionContext: ExecutionContext)
     extends Logging {
 
   def getBoxId(boxName: String, clientId: String)(implicit hc: HeaderCarrier): Future[Option[BoxId]] =
-    http.GET[GetBoxResponse](
-      url = s"${config.baseUrl}/box",
-      queryParams = Seq("boxName" -> boxName, "clientId" -> clientId)
-    )
+    http.get(url"${config.baseUrl}/box?boxName=$boxName&clientId=$clientId")
+      .execute[GetBoxResponse]
       .map(x => Some(x.boxId))
       .recover {
         case e =>
@@ -78,11 +77,10 @@ class PushPullNotificationConnector @Inject() (config: PushPullNotificationConne
       }
 
   def validateBoxOwnership(boxId: BoxId, clientId: String)(implicit hc: HeaderCarrier): Future[Boolean] =
-    http.POST[ValidateBoxOwnershipRequest, ValidateBoxOwnershipResponse](
-      url = s"${config.baseUrl}/cmb/validate",
-      body = ValidateBoxOwnershipRequest(boxId, clientId),
-      headers = Seq(ACCEPT -> "application/vnd.hmrc.1.0+json")
-    )
+    http.post(url"${config.baseUrl}/cmb/validate")
+      .setHeader(ACCEPT -> "application/vnd.hmrc.1.0+json")
+      .withBody(Json.toJson(ValidateBoxOwnershipRequest(boxId, clientId)))
+      .execute[ValidateBoxOwnershipResponse]
       .map(_.valid)
       .recover {
         case e =>
@@ -91,10 +89,9 @@ class PushPullNotificationConnector @Inject() (config: PushPullNotificationConne
       }
 
   def postNotifications(boxId: BoxId, correlationId: CorrelationId, message: String)(implicit hc: HeaderCarrier): Future[NotificationId] =
-    http.POST[PostNotificationsRequest, PostNotificationsResponse](
-      url = s"${config.baseUrl}/box/${boxId.value}/notifications",
-      body = PostNotificationsRequest(correlationId, message)
-    )
+    http.post(url"${config.baseUrl}/box/${boxId.value}/notifications")
+      .withBody(Json.toJson(PostNotificationsRequest(correlationId, message)))
+      .execute[PostNotificationsResponse]
       .map(_.notificationId)
 
 }

@@ -1,5 +1,4 @@
 import uk.gov.hmrc.DefaultBuildSettings
-import uk.gov.hmrc.DefaultBuildSettings._
 
 val appName = "test-ppns-multibox"
 
@@ -40,8 +39,7 @@ lazy val it = (project in file("it"))
   .settings(
     name := "integration-tests",
     Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-eT"),
-    DefaultBuildSettings.itSettings(),
-    addTestReportOption(Test, "int-test-reports")
+    DefaultBuildSettings.itSettings()
   )
 
 commands ++= Seq(

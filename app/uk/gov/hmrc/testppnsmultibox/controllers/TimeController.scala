@@ -24,10 +24,9 @@ import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.auth.core.AuthProvider.StandardApplication
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals._
-import uk.gov.hmrc.auth.core.{AuthProviders, AuthorisedFunctions}
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders, AuthorisedFunctions}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import uk.gov.hmrc.testppnsmultibox.connectors.AuthConnector
 import uk.gov.hmrc.testppnsmultibox.models.{ErrorResponse, NotificationResponse, TimeResponse}
 import uk.gov.hmrc.testppnsmultibox.ppns.models.BoxId
 import uk.gov.hmrc.testppnsmultibox.ppns.services.BoxService
