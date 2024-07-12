@@ -12,7 +12,8 @@
         "fieldDefinitions": [
           {
             "name": "callbackUrl",
-            "description": "What is your callback URL?",
+            "description": "What is your PPNS callback URL?",
+            "shortDescription": "PPNS Callback URL",
             "type": "PPNSField",
             "validation": {
               "errorMessage": "Callback URL must be a valid https URL",

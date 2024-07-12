@@ -22,9 +22,7 @@ import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 
 import uk.gov.hmrc.auth.core.AuthProvider.StandardApplication
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.auth.core.{AuthProviders, InternalError, UnsupportedAuthProvider}
-
-import uk.gov.hmrc.testppnsmultibox.connectors.AuthConnector
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthProviders, InternalError, UnsupportedAuthProvider}
 
 trait AuthConnectorMockModule extends MockitoSugar with ArgumentMatchersSugar {
 
