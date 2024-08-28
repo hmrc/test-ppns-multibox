@@ -1,5 +1,4 @@
 {
-  "scopes": [],
   "api": {
     "name": "PPNS Multibox Test",
     "description": "An API for testing Push Pull Notification Service Multibox",
