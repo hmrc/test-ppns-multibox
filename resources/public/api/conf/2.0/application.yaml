@@ -1,0 +1,216 @@
+openapi: 3.0.3
+
+info:
+  title: Test PPNS Multibox
+  version: '2.0'
+  description: |
+    # Overview
+    This API is for the HMRC API Platform developers to test migration to PPNS multibox.
+
+servers:
+- url: https://test-api.service.hmrc.gov.uk/test/ppns-multibox
+  description: Sandbox
+- url: https://api.service.hmrc.gov.uk/test/ppns-multibox
+  description: Production
+
+tags:
+- name: test-ppns-multibox
+  description: 'Test PPNS Multibox Tag'
+
+components:
+  parameters:
+    acceptHeader:
+      name: Accept
+      in: header
+      schema:
+        type: string
+        enum: [
+          "application/vnd.hmrc.1.0+json",
+          "application/vnd.hmrc.1.0+xml"
+        ]
+      required: true
+  securitySchemes:
+    applicationRestricted:
+      type: oauth2
+      description: |
+        HMRC supports OAuth 2.0 for authenticating application restricted API requests using an OAuth 2.0 Bearer Token in the AUTHORIZATION header.
+        See https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation/application-restricted-endpoints for details.
+      flows:
+        clientCredentials:
+          tokenUrl: https://api.service.hmrc.gov.uk/oauth/token
+          scopes: {}
+  schemas:
+    errorResponse:
+      title: Error Response
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    timeResponse:
+      title: Current Time Response
+      required:
+      - message
+      type: object
+      properties:
+        message:
+          type: string
+      example:
+        message: 2023-02-27T16:54:23.933430Z
+    notificationResponse:
+      title: Notification Response
+      required:
+      - boxId
+      - correlationId
+      type: object
+      properties:
+        boxId:
+          type: string
+        correlationId:
+          type: string
+      example:
+        boxId: f9e722a8-200c-4572-8680-aa3f103ea1a5
+        correlationId: 2bb5b059-73db-4445-a7ae-4e4c471866dd
+  examples:
+    standardAppsOnlyError:
+      summary: Standard apps only
+      value:
+        code: UNAUTHORIZED
+        message: Only standard applications may call this endpoint
+    clientIdRetrievalError:
+      summary: Client ID retrieval
+      value:
+        code: UNAUTHORIZED
+        message: A client ID could not be retrieved after endpoint authorisation
+
+paths:
+  /current-time:
+    get:
+      tags:
+      - test-ppns-multibox
+      summary: Return the current time
+      description: >
+        An endpoint that returns the current server time.
+      parameters:
+      - $ref: '#/components/parameters/acceptHeader'
+      responses:
+        '200':
+          description: 'OK Response'
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/timeResponse'
+      security:
+      - {}
+
+  /notify-me-in/{seconds}:
+    get:
+      tags:
+      - test-ppns-multibox
+      summary: Take seconds to return the current time
+      description: >
+        An endpoint that takes the requested number of seconds to return the current server time.
+      parameters:
+      - $ref: '#/components/parameters/acceptHeader'
+      - in: path
+        name: seconds
+        schema:
+          type: integer
+        required: true
+        description: Number of seconds to notification
+      responses:
+        '202':
+          description: 'ACCEPTED Response'
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/notificationResponse'
+        '400':
+          description: The default notification box is missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              example:
+                code: BAD_REQUEST
+                message: A notification box was not found for client ID {clientId}
+        '401':
+          description: The application is not authorised to call this endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              examples:
+                standardAppsOnly:
+                  $ref: '#/components/examples/standardAppsOnlyError'
+                clientIdRetrieval:
+                  $ref: '#/components/examples/clientIdRetrievalError'
+      security:
+      - applicationRestricted: []
+  
+  /notify-me-at/{boxId}/in/{seconds}:
+    get:
+      tags:
+      - test-ppns-multibox
+      summary: Take seconds to return the current time to the provided box
+      description: >
+        An endpoint that takes a box ID and the requested number of seconds to return the current server time.
+      parameters:
+      - $ref: '#/components/parameters/acceptHeader'
+      - in: path
+        name: boxId
+        schema:
+          type: string
+        required: true
+        description: The ID of a client-managed notification box
+        example: f9e722a8-200c-4572-8680-aa3f103ea1a5
+      - in: path
+        name: seconds
+        schema:
+          type: integer
+        required: true
+        description: Number of seconds to notification
+      responses:
+        '202':
+          description: 'ACCEPTED Response'
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/notificationResponse'
+        '400':
+          description: Bad notification box
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              examples:
+                notAUuid:
+                  summary: Not a UUID
+                  value:
+                    code: BAD_REQUEST
+                    message: Box ID is not a UUID
+                notOwned:
+                  summary: Not owned
+                  value:
+                    code: BAD_REQUEST
+                    message: The provided box is not owned by client ID {clientId}
+        '401':
+          description: The application is not authorised to call this endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              examples:
+                standardAppsOnly:
+                  $ref: '#/components/examples/standardAppsOnlyError'
+                clientIdRetrieval:
+                  $ref: '#/components/examples/clientIdRetrievalError'
+      security:
+      - applicationRestricted: []

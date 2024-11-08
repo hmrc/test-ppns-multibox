@@ -6,7 +6,33 @@
     "versions": [
       {
         "version": "1.0",
-        "status": "STABLE",
+        "status": "RETIRED",
+        "endpointsEnabled": true,
+        "fieldDefinitions": [
+          {
+            "name": "callbackUrl",
+            "description": "What is your PPNS callback URL?",
+            "shortDescription": "PPNS Callback URL",
+            "type": "PPNSField",
+            "validation": {
+              "errorMessage": "Callback URL must be a valid https URL",
+              "rules": [
+                {
+                  "UrlValidationRule": {}
+                },
+                {
+                  "RegexValidationRule": {
+                    "regex": "^https.*"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "version": "2.0",
+        "status": "RETIRED",
         "endpointsEnabled": true,
         "fieldDefinitions": [
           {
